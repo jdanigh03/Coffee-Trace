@@ -1,0 +1,24 @@
+{
+  "name": "coffeetrace-erp",
+  "version": "1.0.0",
+  "description": "Sistema ERP de trazabilidad de café con Hyperledger Fabric",
+  "type": "module",
+  "main": "server/index.js",
+  "scripts": {
+    "dev:server": "node --watch server/index.js",
+    "dev:client": "cd client && npm run dev",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "build": "cd client && npm run build",
+    "start": "node server/index.js",
+    "install-all": "npm install && cd client && npm install"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

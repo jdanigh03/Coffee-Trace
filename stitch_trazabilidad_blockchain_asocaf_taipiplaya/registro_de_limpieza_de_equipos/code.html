@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Registro de Limpieza - CoffeeTrace</title>
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-secondary-container": "#217128",
+                        "inverse-on-surface": "#dff4ff",
+                        "secondary": "#1b6d24",
+                        "on-tertiary-fixed": "#001d34",
+                        "tertiary-fixed-dim": "#99cbff",
+                        "primary-fixed": "#ffdad4",
+                        "surface-tint": "#745853",
+                        "tertiary-container": "#002f4f",
+                        "outline-variant": "#d3c3c0",
+                        "background": "#f3faff",
+                        "on-background": "#071e27",
+                        "primary": "#271310",
+                        "on-tertiary-fixed-variant": "#004a78",
+                        "tertiary-fixed": "#cfe5ff",
+                        "error": "#ba1a1a",
+                        "on-error-container": "#93000a",
+                        "tertiary": "#001a2f",
+                        "secondary-fixed-dim": "#88d982",
+                        "on-tertiary-container": "#439ae2",
+                        "surface": "#f3faff",
+                        "on-surface-variant": "#504442",
+                        "inverse-surface": "#1e333c",
+                        "on-secondary-fixed-variant": "#005312",
+                        "surface-container-high": "#d5ecf8",
+                        "outline": "#827472",
+                        "on-primary-container": "#ae8d87",
+                        "secondary-fixed": "#a3f69c",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed": "#2b1613",
+                        "surface-container-highest": "#cfe6f2",
+                        "error-container": "#ffdad6",
+                        "secondary-container": "#a0f399",
+                        "on-secondary-fixed": "#002204",
+                        "surface-container-low": "#e6f6ff",
+                        "surface-container": "#dbf1fe",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#5b403c",
+                        "inverse-primary": "#e3beb8",
+                        "on-surface": "#071e27",
+                        "on-secondary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "surface-bright": "#f3faff",
+                        "surface-dim": "#c7dde9",
+                        "primary-fixed-dim": "#e3beb8",
+                        "surface-variant": "#cfe6f2",
+                        "primary-container": "#3e2723"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    spacing: {
+                        "stack-lg": "32px",
+                        "stack-md": "16px",
+                        "stack-sm": "8px",
+                        "margin-mobile": "16px",
+                        "gutter": "24px",
+                        "container-max": "1440px",
+                        "margin-desktop": "32px"
+                    },
+                    fontFamily: {
+                        "headline-sm": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "code-sm": ["JetBrains Mono"]
+                    },
+                    fontSize: {
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "code-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md h-screen overflow-hidden flex">
+<!-- Shared Component: SideNavBar -->
+<nav class="fixed left-0 top-0 h-full flex flex-col py-margin-desktop bg-surface-container-highest dark:bg-surface-container-highest border-r border-outline-variant w-64 z-50">
+<div class="px-6 mb-8 flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-3xl" style="font-variation-settings: 'FILL' 1;">water_drop</span>
+<div>
+<h1 class="text-headline-sm font-headline-sm font-bold text-primary dark:text-on-primary-fixed">CoffeeTrace</h1>
+<p class="text-label-caps font-label-caps text-on-surface-variant">Precision Logistics</p>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto flex flex-col gap-1 px-4">
+<!-- Tabs -->
+<a class="flex items-center gap-3 px-4 py-3 rounded text-on-surface-variant font-body-md hover:bg-surface-variant transition-colors" href="#">
+<span class="material-symbols-outlined">agriculture</span> Productores
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-on-surface-variant font-body-md hover:bg-surface-variant transition-colors" href="#">
+<span class="material-symbols-outlined">inventory_2</span> Acopio
+            </a>
+<!-- Active Tab Based on intent -->
+<a class="flex items-center gap-3 px-4 py-3 rounded text-on-primary-container font-bold border-l-4 border-on-primary-container bg-primary-fixed transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">water_drop</span> Planta Taipiplaya
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-on-surface-variant font-body-md hover:bg-surface-variant transition-colors" href="#">
+<span class="material-symbols-outlined">precision_manufacturing</span> Planta El Alto
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-on-surface-variant font-body-md hover:bg-surface-variant transition-colors" href="#">
+<span class="material-symbols-outlined">local_shipping</span> Logística
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-on-surface-variant font-body-md hover:bg-surface-variant transition-colors" href="#">
+<span class="material-symbols-outlined">admin_panel_settings</span> Administración
+            </a>
+</div>
+<div class="px-4 mt-auto pt-4 border-t border-outline-variant flex flex-col gap-2">
+<button class="w-full bg-primary text-on-primary py-2 rounded font-headline-sm text-sm hover:opacity-90 transition-opacity">Verificar Lote</button>
+<div class="flex flex-col gap-1 mt-2">
+<a class="flex items-center gap-3 px-4 py-2 rounded text-on-surface-variant font-body-md hover:bg-surface-variant transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span> Ajustes
+                </a>
+<a class="flex items-center gap-3 px-4 py-2 rounded text-on-surface-variant font-body-md hover:bg-surface-variant transition-colors" href="#">
+<span class="material-symbols-outlined">logout</span> Cerrar Sesión
+                </a>
+</div>
+</div>
+</nav>
+<!-- Main Content Wrapper -->
+<div class="flex-1 flex flex-col ml-64 overflow-hidden relative">
+<!-- Shared Component: TopAppBar -->
+<header class="flex justify-between items-center w-full px-margin-desktop h-16 sticky top-0 z-40 bg-surface dark:bg-surface border-b border-outline-variant">
+<div class="flex items-center gap-6">
+<span class="text-headline-sm font-headline-sm font-extrabold text-primary dark:text-on-primary-fixed">CoffeeTrace Platform</span>
+<nav class="hidden md:flex gap-6 ml-8 h-full">
+<a class="flex items-center h-full text-on-surface-variant hover:text-primary transition-all pt-1" href="#">Dashboard</a>
+<!-- Active Link -->
+<a class="flex items-center h-full text-primary border-b-2 border-primary font-bold pb-1 pt-1" href="#">Registros</a>
+<a class="flex items-center h-full text-on-surface-variant hover:text-primary transition-all pt-1" href="#">Mapa</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-all">
+<span class="material-symbols-outlined">hub</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-all">
+<span class="material-symbols-outlined">sync</span>
+</button>
+<div class="h-6 w-px bg-outline-variant mx-2"></div>
+<button class="bg-primary text-on-primary px-4 py-2 rounded text-body-md font-body-md hover:opacity-90 transition-opacity">Nuevo Registro</button>
+<button class="text-on-surface-variant hover:bg-surface-container-low p-1 rounded-full transition-all ml-2">
+<span class="material-symbols-outlined text-3xl">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Page Canvas -->
+<main class="flex-1 overflow-y-auto p-gutter bg-surface-bright">
+<div class="max-w-container-max mx-auto flex flex-col gap-stack-lg">
+<!-- Page Header -->
+<div>
+<h2 class="text-headline-lg font-headline-lg text-on-surface mb-2">Registro de Limpieza de Equipos</h2>
+<p class="text-body-lg font-body-lg text-on-surface-variant">Lote #L-4920 - Fase de preparación de maquinaria.</p>
+</div>
+<!-- Workflow Stepper (Industrial Process Track) -->
+<div class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg p-6 flex flex-col gap-4">
+<div class="flex items-center justify-between relative">
+<div class="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-outline-variant z-0"></div>
+<!-- Stages -->
+<div class="relative z-10 flex flex-col items-center gap-2 w-24">
+<div class="w-8 h-8 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center border-2 border-surface-container-lowest shadow-sm">
+<span class="material-symbols-outlined text-sm">check</span>
+</div>
+<span class="text-label-caps font-label-caps text-on-surface-variant text-center">Transporte</span>
+</div>
+<div class="relative z-10 flex flex-col items-center gap-2 w-24">
+<div class="w-8 h-8 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center border-2 border-surface-container-lowest shadow-sm">
+<span class="material-symbols-outlined text-sm">check</span>
+</div>
+<span class="text-label-caps font-label-caps text-on-surface-variant text-center">Recepción</span>
+</div>
+<!-- Active Stage -->
+<div class="relative z-10 flex flex-col items-center gap-2 w-24">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center border-4 border-surface-container-lowest shadow-md animate-pulse">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">cleaning_services</span>
+</div>
+<span class="text-label-caps font-label-caps text-primary font-bold text-center">Limpieza</span>
+</div>
+<div class="relative z-10 flex flex-col items-center gap-2 w-24">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest text-outline flex items-center justify-center border-2 border-surface-container-lowest">
+<span class="text-xs font-bold">4</span>
+</div>
+<span class="text-label-caps font-label-caps text-outline text-center">Trillado</span>
+</div>
+<div class="relative z-10 flex flex-col items-center gap-2 w-24">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest text-outline flex items-center justify-center border-2 border-surface-container-lowest">
+<span class="text-xs font-bold">5</span>
+</div>
+<span class="text-label-caps font-label-caps text-outline text-center">Selección</span>
+</div>
+<div class="relative z-10 flex flex-col items-center gap-2 w-24 opacity-50">
+<div class="w-4 h-4 rounded-full bg-outline-variant mt-2"></div>
+</div>
+<div class="relative z-10 flex flex-col items-center gap-2 w-24 opacity-50">
+<div class="w-4 h-4 rounded-full bg-outline-variant mt-2"></div>
+</div>
+</div>
+</div>
+<!-- Main Form Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+<!-- Form Section -->
+<div class="lg:col-span-2 bg-surface-container-lowest border border-outline-variant rounded-lg p-6 shadow-sm">
+<div class="flex items-center gap-2 mb-6 border-b border-outline-variant pb-4">
+<span class="material-symbols-outlined text-primary">app_registration</span>
+<h3 class="text-headline-md font-headline-md text-on-surface">Detalles Operativos</h3>
+</div>
+<form class="grid grid-cols-1 md:grid-cols-2 gap-stack-md">
+<div class="flex flex-col gap-2">
+<label class="text-label-caps font-label-caps text-on-surface-variant">FECHA Y HORA</label>
+<input class="bg-surface-bright border border-outline-variant rounded text-body-md font-body-md text-on-surface focus:ring-2 focus:ring-primary-container p-2" type="datetime-local" value="2023-10-27T08:30"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-caps font-label-caps text-on-surface-variant">EQUIPO / LÍNEA</label>
+<select class="bg-surface-bright border border-outline-variant rounded text-body-md font-body-md text-on-surface focus:ring-2 focus:ring-primary-container p-2">
+<option>Despulpador A-1</option>
+<option>Secadora Rotativa S-02</option>
+<option>Banda Transportadora L-1</option>
+</select>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-caps font-label-caps text-on-surface-variant">RESPONSABLE TÉCNICO</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">badge</span>
+<input class="w-full pl-10 pr-3 py-2 bg-surface-bright border border-outline-variant rounded text-body-md font-body-md text-on-surface focus:ring-2 focus:ring-primary-container" type="text" value="Ing. Carlos Mamani"/>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-caps font-label-caps text-on-surface-variant">TIPO DE LIMPIEZA</label>
+<div class="flex gap-4 h-full items-center">
+<label class="flex items-center gap-2 cursor-pointer">
+<input checked="" class="text-primary focus:ring-primary-container" name="tipo_limpieza" type="radio"/>
+<span class="text-body-md font-body-md">Profunda (CIP)</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer">
+<input class="text-primary focus:ring-primary-container" name="tipo_limpieza" type="radio"/>
+<span class="text-body-md font-body-md">Rápida (Entre lotes)</span>
+</label>
+</div>
+</div>
+<div class="flex flex-col gap-2 md:col-span-2">
+<label class="text-label-caps font-label-caps text-on-surface-variant">INSUMOS UTILIZADOS</label>
+<textarea class="bg-surface-bright border border-outline-variant rounded text-body-md font-body-md text-on-surface focus:ring-2 focus:ring-primary-container p-2" placeholder="Ej: Detergente alcalino 2%, Agua a 80°C..." rows="2"></textarea>
+</div>
+<div class="md:col-span-2 mt-4 p-4 bg-surface-container-high rounded border border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant text-3xl">memory</span>
+<div>
+<p class="text-body-md font-body-md font-bold text-on-surface">Verificación de PLC</p>
+<p class="text-code-sm font-code-sm text-on-surface-variant">Sensor de flujo: Activo | Temp: 82.1°C</p>
+</div>
+</div>
+<label class="flex items-center gap-2 cursor-pointer bg-surface-container-lowest px-4 py-2 border border-outline-variant rounded hover:bg-surface-variant transition-colors">
+<input checked="" class="rounded text-secondary focus:ring-secondary-container" type="checkbox"/>
+<span class="text-label-caps font-label-caps font-bold">REGISTRO AUTOMÁTICO</span>
+</label>
+</div>
+</form>
+<div class="mt-8 flex justify-end gap-4 border-t border-outline-variant pt-6">
+<button class="px-6 py-2 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-container-low transition-colors font-body-md">Cancelar</button>
+<button class="px-6 py-2 rounded bg-primary text-on-primary hover:opacity-90 transition-opacity font-body-md flex items-center gap-2">
+                                Guardar Registro <span class="material-symbols-outlined text-sm">save</span>
+</button>
+</div>
+</div>
+<!-- Integrity Section -->
+<div class="flex flex-col gap-stack-md">
+<!-- Blockchain Sync Card -->
+<div class="bg-surface-container-lowest border border-tertiary-fixed rounded-lg p-6 shadow-sm relative overflow-hidden">
+<div class="absolute top-0 right-0 w-32 h-32 bg-tertiary-fixed opacity-20 rounded-bl-full -z-10"></div>
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-on-tertiary-container animate-spin">sync</span>
+<h3 class="text-headline-sm font-headline-sm text-tertiary-container">Sincronización de Red</h3>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant mb-4">
+                                El registro actual se encuentra en estado de borrador. Al guardar, se generará un bloque inmutable en la cadena de bloques.
+                            </p>
+<div class="bg-background border border-outline-variant rounded p-3 mb-4">
+<p class="text-label-caps font-label-caps text-outline mb-1">HASH PREVISTO (SHA-256)</p>
+<p class="text-code-sm font-code-sm text-on-surface break-all opacity-50">
+                                    Generando... Esperando confirmación de datos.
+                                </p>
+</div>
+<div class="flex items-center gap-2 text-label-caps font-label-caps text-on-surface-variant bg-surface-container-low p-2 rounded">
+<span class="material-symbols-outlined text-sm">lock_clock</span>
+                                Sello de tiempo será aplicado al guardar.
+                            </div>
+</div>
+<!-- Info Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-6 shadow-sm">
+<h4 class="text-body-lg font-headline-sm font-bold text-on-surface mb-2">Protocolo de Limpieza</h4>
+<ul class="text-body-md font-body-md text-on-surface-variant list-disc pl-5 space-y-2">
+<li>Obligatorio entre lotes de diferentes certificaciones (ej. Orgánico vs Convencional).</li>
+<li>La limpieza CIP debe durar mínimo 45 minutos.</li>
+<li>El registro automático de PLC valida la temperatura del agua.</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

@@ -1,0 +1,45 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME:-coffeetrace}
+      POSTGRES_USER: ${DB_USER:-coffeetrace}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-coffeetrace}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-coffeetrace}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-coffeetrace}
+      DB_USER: ${DB_USER:-coffeetrace}
+      DB_PASSWORD: ${DB_PASSWORD:-coffeetrace}
+    depends_on:
+      db:
+        condition: service_healthy
+    # Sin puertos publicados: solo nginx habla con el API, por la red interna.
+    expose:
+      - "3000"
+
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    ports:
+      - "8080:80"
+    depends_on:
+      - server
+
+volumes:
+  pgdata:

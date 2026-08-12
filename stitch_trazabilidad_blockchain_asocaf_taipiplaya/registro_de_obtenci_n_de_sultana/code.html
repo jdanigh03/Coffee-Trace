@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CoffeeTrace - Registro de Obtención de Sultana</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-container": "#217128",
+                        "inverse-on-surface": "#dff4ff",
+                        "secondary": "#1b6d24",
+                        "on-tertiary-fixed": "#001d34",
+                        "tertiary-fixed-dim": "#99cbff",
+                        "primary-fixed": "#ffdad4",
+                        "surface-tint": "#745853",
+                        "tertiary-container": "#002f4f",
+                        "outline-variant": "#d3c3c0",
+                        "background": "#f3faff",
+                        "on-background": "#071e27",
+                        "primary": "#271310",
+                        "on-tertiary-fixed-variant": "#004a78",
+                        "tertiary-fixed": "#cfe5ff",
+                        "error": "#ba1a1a",
+                        "on-error-container": "#93000a",
+                        "tertiary": "#001a2f",
+                        "secondary-fixed-dim": "#88d982",
+                        "on-tertiary-container": "#439ae2",
+                        "surface": "#f3faff",
+                        "on-surface-variant": "#504442",
+                        "inverse-surface": "#1e333c",
+                        "on-secondary-fixed-variant": "#005312",
+                        "surface-container-high": "#d5ecf8",
+                        "outline": "#827472",
+                        "on-primary-container": "#ae8d87",
+                        "secondary-fixed": "#a3f69c",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed": "#2b1613",
+                        "surface-container-highest": "#cfe6f2",
+                        "error-container": "#ffdad6",
+                        "secondary-container": "#a0f399",
+                        "on-secondary-fixed": "#002204",
+                        "surface-container-low": "#e6f6ff",
+                        "surface-container": "#dbf1fe",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#5b403c",
+                        "inverse-primary": "#e3beb8",
+                        "on-surface": "#071e27",
+                        "on-secondary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "surface-bright": "#f3faff",
+                        "surface-dim": "#c7dde9",
+                        "primary-fixed-dim": "#e3beb8",
+                        "surface-variant": "#cfe6f2",
+                        "primary-container": "#3e2723"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "stack-lg": "32px",
+                        "stack-md": "16px",
+                        "stack-sm": "8px",
+                        "margin-mobile": "16px",
+                        "gutter": "24px",
+                        "container-max": "1440px",
+                        "margin-desktop": "32px"
+                    },
+                    "fontFamily": {
+                        "headline-sm": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "code-sm": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "code-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.filled {
+            font-variation-settings: 'FILL' 1;
+        }
+        
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex">
+<!-- SideNavBar -->
+<nav class="hidden md:flex fixed left-0 top-0 h-full flex-col py-margin-desktop w-64 border-r border-outline-variant bg-surface-container-highest z-50">
+<div class="px-gutter mb-stack-lg">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined filled text-primary" data-icon="coffee_maker" style="font-size: 32px;">coffee_maker</span>
+<div>
+<h1 class="text-headline-sm font-headline-sm font-bold text-primary">CoffeeTrace</h1>
+<p class="text-label-caps font-label-caps text-on-surface-variant">Precision Logistics</p>
+</div>
+</div>
+</div>
+<ul class="flex flex-col gap-1 px-4 flex-grow">
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant font-body-md hover:bg-surface-variant transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="agriculture">agriculture</span>
+<span>Productores</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant font-body-md hover:bg-surface-variant transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span>Acopio</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant font-body-md hover:bg-surface-variant transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="water_drop">water_drop</span>
+<span>Planta Taipiplaya</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-primary-container font-bold border-l-4 border-on-primary-container bg-primary-fixed transition-colors" href="#">
+<span class="material-symbols-outlined filled" data-icon="precision_manufacturing">precision_manufacturing</span>
+<span>Planta El Alto</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant font-body-md hover:bg-surface-variant transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="local_shipping">local_shipping</span>
+<span>Logística</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant font-body-md hover:bg-surface-variant transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="admin_panel_settings">admin_panel_settings</span>
+<span>Administración</span>
+</a>
+</li>
+</ul>
+<div class="px-4 mt-auto">
+<button class="w-full py-2 px-4 bg-primary text-on-primary font-label-caps text-label-caps rounded-lg hover:bg-primary-container transition-colors flex items-center justify-center gap-2 mb-stack-md">
+<span class="material-symbols-outlined text-[18px]" data-icon="verified">verified</span>
+                Verificar Lote
+            </button>
+<ul class="flex flex-col gap-1 border-t border-outline-variant pt-4">
+<li>
+<a class="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant font-body-md hover:bg-surface-variant transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="settings">settings</span>
+<span>Ajustes</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-2 rounded-lg text-error font-body-md hover:bg-error-container hover:text-on-error-container transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="logout">logout</span>
+<span>Cerrar Sesión</span>
+</a>
+</li>
+</ul>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 md:ml-64 flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center w-full px-margin-desktop h-16 sticky top-0 z-40 border-b border-outline-variant bg-surface bg-opacity-95 backdrop-blur-sm">
+<div class="flex items-center gap-6">
+<h2 class="text-headline-sm font-headline-sm font-extrabold text-primary">CoffeeTrace Platform</h2>
+<nav class="hidden lg:flex gap-6">
+<a class="text-on-surface-variant hover:text-primary transition-all pb-1" href="#">Dashboard</a>
+<a class="text-primary border-b-2 border-primary font-bold pb-1" href="#">Registros</a>
+<a class="text-on-surface-variant hover:text-primary transition-all pb-1" href="#">Mapa</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden sm:flex items-center gap-3">
+<button class="text-on-surface-variant hover:text-primary transition-colors focus:ring-2 ring-primary-container rounded-full p-1"><span class="material-symbols-outlined" data-icon="hub">hub</span></button>
+<button class="text-on-surface-variant hover:text-primary transition-colors focus:ring-2 ring-primary-container rounded-full p-1"><span class="material-symbols-outlined" data-icon="sync">sync</span></button>
+<button class="text-on-surface-variant hover:text-primary transition-colors focus:ring-2 ring-primary-container rounded-full p-1"><span class="material-symbols-outlined" data-icon="account_circle">account_circle</span></button>
+</div>
+<button class="bg-primary-container text-on-primary-container px-4 py-2 rounded-lg font-label-caps text-label-caps hover:bg-primary hover:text-on-primary transition-colors">Nuevo Registro</button>
+</div>
+</header>
+<!-- Canvas -->
+<main class="flex-1 p-margin-desktop overflow-y-auto">
+<!-- Workflow Stepper -->
+<div class="mb-stack-lg bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm overflow-x-auto">
+<h3 class="text-label-caps font-label-caps text-on-surface-variant mb-4 uppercase">Estado del Lote: LT-SUL-2023X</h3>
+<div class="flex items-center min-w-max">
+<!-- Stage 1 -->
+<div class="flex items-center">
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px] font-bold" data-icon="check">check</span>
+</div>
+<span class="ml-2 text-body-md font-body-md text-on-surface font-semibold">1. Limpieza</span>
+<div class="w-12 h-[2px] bg-secondary-container mx-2"></div>
+</div>
+<!-- Stage 2 (Active) -->
+<div class="flex items-center">
+<div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center ring-4 ring-primary-fixed">
+<span class="text-label-caps font-label-caps">2</span>
+</div>
+<span class="ml-2 text-body-md font-body-md text-primary font-bold">2. Secado / Sultana</span>
+<div class="w-12 h-[2px] bg-outline-variant mx-2"></div>
+</div>
+<!-- Stage 3 -->
+<div class="flex items-center opacity-50">
+<div class="w-8 h-8 rounded-full border-2 border-outline-variant text-on-surface-variant flex items-center justify-center bg-surface">
+<span class="text-label-caps font-label-caps">3</span>
+</div>
+<span class="ml-2 text-body-md font-body-md text-on-surface-variant">3. Almacenamiento</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+<!-- Left Column: Form -->
+<div class="lg:col-span-2 space-y-gutter">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-8 shadow-sm">
+<div class="flex justify-between items-start mb-6 border-b border-outline-variant pb-4">
+<div>
+<h1 class="text-headline-md font-headline-md text-primary">Obtención de Sultana</h1>
+<p class="text-body-md font-body-md text-on-surface-variant mt-1">Registro técnico de secado y procesamiento de cáscara.</p>
+</div>
+<div class="bg-tertiary-fixed text-on-tertiary-fixed-variant px-3 py-1 rounded border border-tertiary-container flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] animate-spin" data-icon="sync">sync</span>
+<span class="font-code-sm text-code-sm">Borrador Local</span>
+</div>
+</div>
+<form class="space-y-6">
+<!-- Input Section: Datos de Entrada -->
+<div>
+<h3 class="text-label-caps font-label-caps text-primary mb-4 border-l-2 border-primary pl-2">Datos de Entrada (Planta El Alto)</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div>
+<label class="block text-body-md font-body-md text-on-surface mb-2">Peso Cáscara Húmeda Ingresada</label>
+<div class="relative">
+<input class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-3 text-on-surface focus:ring-2 focus:ring-primary-container focus:border-primary-container outline-none transition-all pr-12 font-code-sm" placeholder="0.00" type="number"/>
+<span class="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant font-label-caps">KG</span>
+</div>
+</div>
+<div>
+<label class="block text-body-md font-body-md text-on-surface mb-2">Lote Origen Asignado</label>
+<input class="w-full bg-surface-container-high border border-outline-variant rounded-lg px-4 py-3 text-on-surface-variant font-code-sm cursor-not-allowed" disabled="" type="text" value="LT-CASC-2309A"/>
+</div>
+</div>
+</div>
+<!-- Input Section: Parámetros de Proceso -->
+<div>
+<h3 class="text-label-caps font-label-caps text-primary mb-4 border-l-2 border-primary pl-2 mt-8">Parámetros de Proceso Térmico</h3>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div>
+<label class="block text-body-md font-body-md text-on-surface mb-2">Temp. Promedio Secado</label>
+<div class="relative">
+<input class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-3 text-on-surface focus:ring-2 focus:ring-primary-container outline-none pr-12 font-code-sm" placeholder="00.0" type="number"/>
+<span class="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant font-label-caps">°C</span>
+</div>
+</div>
+<div>
+<label class="block text-body-md font-body-md text-on-surface mb-2">Tiempo de Proceso</label>
+<div class="relative">
+<input class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-3 text-on-surface focus:ring-2 focus:ring-primary-container outline-none pr-12 font-code-sm" placeholder="0" type="number"/>
+<span class="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant font-label-caps">HRS</span>
+</div>
+</div>
+<div>
+<label class="block text-body-md font-body-md text-on-surface mb-2">Operador Responsable</label>
+<select class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-3 text-on-surface focus:ring-2 focus:ring-primary-container outline-none font-body-md appearance-none">
+<option>Seleccionar...</option>
+<option>Carlos Mamani (ID: OP-04)</option>
+<option>Julia Quispe (ID: OP-07)</option>
+</select>
+</div>
+</div>
+</div>
+<!-- Input Section: Producto Final -->
+<div class="bg-surface-container-low p-6 rounded-lg border border-outline-variant mt-8">
+<h3 class="text-label-caps font-label-caps text-primary mb-4">Rendimiento: Sultana Obtenida</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div>
+<label class="block text-body-md font-body-md text-on-surface mb-2">Peso Final (Seco)</label>
+<div class="relative">
+<input class="w-full bg-surface-container-lowest border-2 border-primary-container rounded-lg px-4 py-3 text-on-surface focus:ring-2 focus:ring-primary outline-none pr-12 font-code-sm font-bold text-lg" placeholder="0.00" type="number"/>
+<span class="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant font-label-caps">KG</span>
+</div>
+<p class="text-[11px] text-on-surface-variant mt-1">Calcula merma automáticamente al guardar.</p>
+</div>
+<div>
+<label class="block text-body-md font-body-md text-on-surface mb-2">Grado de Humedad Final</label>
+<div class="relative">
+<input class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-3 text-on-surface focus:ring-2 focus:ring-primary-container outline-none pr-12 font-code-sm" placeholder="10.0" type="number"/>
+<span class="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant font-label-caps">%</span>
+</div>
+</div>
+</div>
+</div>
+</form>
+</div>
+</div>
+<!-- Right Column: Context & Actions -->
+<div class="space-y-gutter">
+<!-- Calidad Panel -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary" data-icon="psychiatry">psychiatry</span>
+<h3 class="text-headline-sm font-headline-sm text-on-surface">Panel de Calidad</h3>
+</div>
+<div class="space-y-4">
+<div>
+<label class="block text-label-caps font-label-caps text-on-surface-variant mb-2">Perfil de Color</label>
+<div class="flex gap-2">
+<button class="flex-1 py-2 rounded border border-outline-variant hover:bg-surface-variant text-center font-body-md text-on-surface transition-colors focus:bg-primary-container focus:text-on-primary-container focus:border-primary-container">Rubí Claro</button>
+<button class="flex-1 py-2 rounded border border-outline-variant hover:bg-surface-variant text-center font-body-md text-on-surface transition-colors focus:bg-primary-container focus:text-on-primary-container focus:border-primary-container">Ámbar</button>
+<button class="flex-1 py-2 rounded border border-outline-variant hover:bg-surface-variant text-center font-body-md text-on-surface transition-colors focus:bg-primary-container focus:text-on-primary-container focus:border-primary-container">Oscuro</button>
+</div>
+</div>
+<div>
+<label class="block text-label-caps font-label-caps text-on-surface-variant mb-2">Notas de Aroma (Visual/Olfativo)</label>
+<textarea class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-3 text-on-surface focus:ring-2 focus:ring-primary-container outline-none font-body-md h-24 resize-none" placeholder="Ej. Notas frutales intensas, ausencia de olores a fermento defectuoso..."></textarea>
+</div>
+<div class="flex items-center gap-2 mt-2 bg-surface-container-high p-3 rounded text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]" data-icon="info">info</span>
+<p class="text-body-md font-body-md text-sm">La calidad visual determina la clasificación para exportación.</p>
+</div>
+</div>
+</div>
+<!-- Blockchain Action Card -->
+<div class="bg-tertiary text-on-tertiary rounded-xl p-6 shadow-md relative overflow-hidden">
+<!-- Abstract Background Pattern -->
+<div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(circle at 2px 2px, white 1px, transparent 0); background-size: 20px 20px;"></div>
+<div class="relative z-10">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined" data-icon="enhanced_encryption">enhanced_encryption</span>
+<h3 class="text-headline-sm font-headline-sm">Inmutabilidad Blockchain</h3>
+</div>
+<p class="text-body-md font-body-md text-tertiary-fixed-dim mb-6">Al sellar este registro, los datos de peso y humedad se encriptarán y no podrán ser modificados. Se generará un hash único para auditoría.</p>
+<button class="w-full py-4 bg-secondary text-on-secondary rounded-lg font-headline-sm text-headline-sm hover:bg-on-secondary-container hover:text-white transition-all shadow-[0_4px_12px_rgba(0,0,0,0.15)] flex justify-center items-center gap-3 group">
+                                Sellar y Firmar
+                                <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

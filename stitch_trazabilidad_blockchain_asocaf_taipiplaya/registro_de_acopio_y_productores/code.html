@@ -1,0 +1,506 @@
+<!DOCTYPE html><html class="light" lang="es"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>CoffeeTrace - Registro de Acopio</title>
+<!-- Google Fonts: Inter & JetBrains Mono -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-container": "#ae8d87",
+                        "on-secondary-fixed": "#002204",
+                        "on-secondary": "#ffffff",
+                        "secondary-container": "#a0f399",
+                        "on-tertiary-fixed-variant": "#004a78",
+                        "inverse-on-surface": "#dff4ff",
+                        "on-surface-variant": "#504442",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed-variant": "#005312",
+                        "on-primary-fixed-variant": "#5b403c",
+                        "surface-container-high": "#d5ecf8",
+                        "tertiary-container": "#002f4f",
+                        "primary-fixed": "#ffdad4",
+                        "primary-fixed-dim": "#e3beb8",
+                        "on-surface": "#071e27",
+                        "surface-bright": "#f3faff",
+                        "on-primary-fixed": "#2b1613",
+                        "surface": "#f3faff",
+                        "surface-container-low": "#e6f6ff",
+                        "secondary-fixed-dim": "#88d982",
+                        "on-background": "#071e27",
+                        "outline-variant": "#d3c3c0",
+                        "error-container": "#ffdad6",
+                        "error": "#ba1a1a",
+                        "surface-container": "#dbf1fe",
+                        "on-tertiary-container": "#439ae2",
+                        "tertiary-fixed-dim": "#99cbff",
+                        "on-secondary-container": "#217128",
+                        "surface-dim": "#c7dde9",
+                        "secondary-fixed": "#a3f69c",
+                        "on-primary": "#ffffff",
+                        "outline": "#827472",
+                        "surface-variant": "#cfe6f2",
+                        "on-tertiary": "#ffffff",
+                        "inverse-primary": "#e3beb8",
+                        "tertiary-fixed": "#cfe5ff",
+                        "background": "#f3faff",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed": "#001d34",
+                        "tertiary": "#001a2f",
+                        "surface-container-highest": "#cfe6f2",
+                        "secondary": "#1b6d24",
+                        "inverse-surface": "#1e333c",
+                        "primary": "#271310",
+                        "on-error-container": "#93000a",
+                        "surface-tint": "#745853",
+                        "primary-container": "#3e2723"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin-desktop": "32px",
+                        "margin-mobile": "16px",
+                        "stack-lg": "32px",
+                        "stack-md": "16px",
+                        "container-max": "1440px",
+                        "gutter": "24px",
+                        "stack-sm": "8px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "code-sm": ["JetBrains Mono"],
+                        "headline-lg": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "code-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .step-active {
+            @apply border-primary bg-primary text-white;
+        }
+        .step-inactive {
+            @apply border-outline-variant bg-surface text-on-surface-variant;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.5; }
+            50% { transform: scale(1); opacity: 0.3; }
+            100% { transform: scale(0.95); opacity: 0.5; }
+        }
+        .animate-blockchain {
+            animation: pulse-ring 2s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-background font-body-md text-on-background min-h-screen">
+<!-- Side Navigation Shell -->
+<nav class="fixed left-0 top-0 h-full flex flex-col py-margin-desktop docked h-full w-64 border-r border-outline-variant bg-surface-container-highest transition-all z-50">
+<div class="px-6 mb-10">
+<h1 class="text-headline-md font-headline-md font-bold text-primary">CoffeeTrace</h1>
+<p class="text-label-caps font-label-caps text-on-surface-variant opacity-70">Precision Logistics</p>
+</div>
+<div class="flex-1 space-y-1 px-3">
+<!-- Navigation Items -->
+<a class="flex items-center gap-3 px-3 py-3 text-on-surface-variant font-body-md hover:bg-surface-variant transition-colors group" href="#">
+<span class="material-symbols-outlined text-primary">agriculture</span>
+<span class="">Productores</span>
+</a>
+<!-- Active State: Acopio -->
+<a class="flex items-center gap-3 px-3 py-3 text-on-primary-container font-bold border-l-4 border-on-primary-container bg-primary-fixed transition-colors active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="">Acopio</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-3 text-on-surface-variant font-body-md hover:bg-surface-variant transition-colors" href="#">
+<span class="material-symbols-outlined">water_drop</span>
+<span class="">Planta Taipiplaya</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-3 text-on-surface-variant font-body-md hover:bg-surface-variant transition-colors" href="#">
+<span class="material-symbols-outlined">precision_manufacturing</span>
+<span class="">Planta El Alto</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-3 text-on-surface-variant font-body-md hover:bg-surface-variant transition-colors" href="#">
+<span class="material-symbols-outlined">local_shipping</span>
+<span class="">Logística</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-3 text-on-surface-variant font-body-md hover:bg-surface-variant transition-colors" href="#">
+<span class="material-symbols-outlined">admin_panel_settings</span>
+<span class="">Administración</span>
+</a>
+</div>
+<div class="mt-auto px-3 py-6 space-y-1">
+<button class="w-full bg-primary-container text-white py-3 px-4 font-label-caps text-label-caps flex items-center justify-center gap-2 hover:brightness-110 transition-all mb-4">
+<span class="material-symbols-outlined text-[20px]">verified</span>
+                Verificar Lote
+            </button>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant font-body-md hover:bg-surface-variant transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="">Ajustes</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-error font-body-md hover:bg-error-container transition-colors" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="">Cerrar Sesión</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Shell -->
+<main class="ml-64 flex-1">
+<!-- Top Bar -->
+<header class="flex justify-between items-center w-full px-margin-desktop h-16 sticky top-0 z-40 bg-surface border-b border-outline-variant">
+<div class="flex items-center gap-8">
+<div class="relative group">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant">search</span>
+<input class="bg-surface-container-low border-none h-10 pl-10 pr-4 w-64 text-body-md focus:ring-2 focus:ring-primary-container rounded transition-all" placeholder="Buscar lote o productor..." type="text">
+</div>
+<nav class="hidden md:flex gap-6">
+<a class="text-on-surface-variant hover:text-primary transition-all" href="#">Dashboard</a>
+<a class="text-primary border-b-2 border-primary font-bold pb-1" href="#">Registros</a>
+<a class="text-on-surface-variant hover:text-primary transition-all" href="#">Mapa</a>
+</nav>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-2 rounded">hub</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-2 rounded">sync</button>
+</div>
+<div class="flex items-center gap-3 pl-6 border-l border-outline-variant">
+<div class="text-right hidden lg:block">
+<p class="text-body-md font-bold text-on-surface leading-none">M. Choque</p>
+<p class="text-code-sm text-on-surface-variant">Operador Acopio</p>
+</div>
+<img class="w-10 h-10 rounded-full border border-outline object-cover" data-alt="A professional headshot of a person working in a coffee logistics facility, wearing a corporate vest with a subtle logo, set against a clean, blurred office background with warm industrial lighting. High-end professional photography style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJ05wS2PNq4s6zP4GRdUm12QKdABkMqsdc2hnz3u88uL16GwszlfAWsNQyT0FbV7hXCB3F1AkxxdCt9LUM6PhbsuTwLS0mpFn5Q6tiFha0mTtDtVBORgKEdiqz1quYqYwrbhsyzspQp23ickZB1DxUdI2BWmj0UJ0uoLxfD4GtgAGrcdccccOVXbe7A8Uj5FXMjX2lnEusHD-CTD57aLfH-ygONgOnoqAFZkAmphbVhcEu53sYnIea">
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<div class="p-margin-desktop max-w-[1200px] mx-auto">
+<!-- Workflow Stepper -->
+<div class="mb-stack-lg overflow-x-auto scrollbar-hide">
+<div class="flex justify-between items-center min-w-[1000px] px-2">
+<div class="flex flex-col items-center gap-2 opacity-50 grayscale">
+<div class="w-10 h-10 rounded-full border-2 border-primary bg-primary text-white flex items-center justify-center font-bold">1</div>
+<span class="text-label-caps font-label-caps whitespace-nowrap">Transporte</span>
+</div>
+<div class="flex-1 h-[2px] bg-outline-variant mx-2"></div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-10 h-10 rounded-full border-2 border-primary bg-primary text-white flex items-center justify-center font-bold">2</div>
+<span class="text-label-caps font-label-caps whitespace-nowrap text-primary">Recepción</span>
+</div>
+<div class="flex-1 h-[2px] bg-outline-variant mx-2"></div>
+<div class="flex flex-col items-center gap-2 opacity-30">
+<div class="w-10 h-10 rounded-full border-2 border-outline-variant flex items-center justify-center font-bold">3</div>
+<span class="text-label-caps font-label-caps whitespace-nowrap">Limpieza</span>
+</div>
+<div class="flex-1 h-[2px] bg-outline-variant mx-2"></div>
+<div class="flex flex-col items-center gap-2 opacity-30">
+<div class="w-10 h-10 rounded-full border-2 border-outline-variant flex items-center justify-center font-bold">4</div>
+<span class="text-label-caps font-label-caps whitespace-nowrap">Trillado</span>
+</div>
+<div class="flex-1 h-[2px] bg-outline-variant mx-2"></div>
+<div class="flex flex-col items-center gap-2 opacity-30">
+<div class="w-10 h-10 rounded-full border-2 border-outline-variant flex items-center justify-center font-bold">5</div>
+<span class="text-label-caps font-label-caps whitespace-nowrap">Selección</span>
+</div>
+<div class="flex-1 h-[2px] bg-outline-variant mx-2"></div>
+<div class="flex flex-col items-center gap-2 opacity-30">
+<div class="w-10 h-10 rounded-full border-2 border-outline-variant flex items-center justify-center font-bold">6</div>
+<span class="text-label-caps font-label-caps whitespace-nowrap">Almacén</span>
+</div>
+<div class="flex-1 h-[2px] bg-outline-variant mx-2"></div>
+<div class="flex flex-col items-center gap-2 opacity-30">
+<div class="w-10 h-10 rounded-full border-2 border-outline-variant flex items-center justify-center font-bold">7</div>
+<span class="text-label-caps font-label-caps whitespace-nowrap">Despacho</span>
+</div>
+<div class="flex-1 h-[2px] bg-outline-variant mx-2"></div>
+<div class="flex flex-col items-center gap-2 opacity-30">
+<div class="w-10 h-10 rounded-full border-2 border-outline-variant flex items-center justify-center font-bold">8</div>
+<span class="text-label-caps font-label-caps whitespace-nowrap">Exportación</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-stack-lg items-start">
+<!-- Registration Form -->
+<div class="lg:col-span-2 bg-surface-container-lowest p-8 border border-outline-variant shadow-sm">
+<div class="flex justify-between items-start mb-8">
+<div>
+<h2 class="text-headline-sm font-headline-sm text-primary">Registro de Acopio</h2>
+<p class="text-body-md text-on-surface-variant">Ingrese los datos de entrega para generar el certificado de origen.</p>
+</div>
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 text-label-caps font-label-caps flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+                            EN LÍNEA
+                        </span>
+</div>
+<form class="space-y-6" id="acopioForm">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-2">
+<label class="text-label-caps font-label-caps text-on-surface-variant">ID Productor</label>
+<div class="relative">
+<input class="w-full border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary h-12 bg-surface-bright" placeholder="Ej: PROD-8821" required="" type="text">
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-primary font-bold text-code-sm hover:underline" type="button">VERIFICAR</button>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-label-caps font-label-caps text-on-surface-variant">Comunidad</label>
+<select class="w-full border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary h-12 bg-surface-bright">
+<option>Taipiplaya - Central</option>
+<option>Beni - Ribera Alta</option>
+<option>Yungas - San Juan</option>
+</select>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="space-y-2">
+<label class="text-label-caps font-label-caps text-on-surface-variant">Cantidad de Bolsas</label>
+<div class="relative">
+<input class="w-full border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary h-12 bg-surface-bright pr-12" placeholder="0" required="" type="number">
+<span class="absolute right-4 top-1/2 -translate-y-1/2 text-code-sm text-on-surface-variant font-bold">und</span>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-label-caps font-label-caps text-on-surface-variant">Peso Bruto</label>
+<div class="relative">
+<input class="w-full border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary h-12 bg-surface-bright pr-12" placeholder="0.00" required="" step="0.01" type="number">
+<span class="absolute right-4 top-1/2 -translate-y-1/2 text-code-sm text-on-surface-variant font-bold">kg</span>
+</div>
+</div>
+
+</div>
+<div class="space-y-2">
+<label class="text-label-caps font-label-caps text-on-surface-variant">Observaciones</label>
+<textarea class="w-full border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary bg-surface-bright" placeholder="Detalles sobre el estado del grano o condiciones de entrega..." rows="3"></textarea>
+</div>
+<div class="pt-4">
+<button class="w-full h-14 bg-primary text-white font-label-caps text-body-lg flex items-center justify-center gap-3 hover:bg-primary-container active:scale-[0.99] transition-all relative overflow-hidden group" id="submitBtn" type="submit">
+<span class="z-10" id="btnText">REGISTRAR Y FIRMAR EN BLOCKCHAIN</span>
+<span class="material-symbols-outlined z-10 group-hover:translate-x-1 transition-transform">lock</span>
+<div class="hidden absolute inset-0 bg-secondary flex items-center justify-center z-20" id="btnLoader">
+<span class="material-symbols-outlined animate-spin mr-2">sync</span>
+                                    GENERANDO HASH...
+                                </div>
+</button>
+</div>
+</form>
+</div>
+<!-- Integrity Info Cards (Industrial Aesthetic) -->
+<div class="space-y-6">
+<div class="bg-surface-container p-6 border border-outline-variant">
+<div class="flex items-center gap-3 mb-4 text-tertiary-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">security</span>
+<h3 class="font-bold text-body-lg uppercase tracking-wider">Trazabilidad Garantizada</h3>
+</div>
+<p class="text-body-md text-on-surface-variant mb-4">
+                            Cada movimiento genera un hash único SHA-256 almacenado en la red, asegurando que la información de origen nunca pueda ser alterada.
+                        </p>
+<div class="p-3 bg-surface-bright border border-outline-variant font-code-sm text-on-tertiary-container break-all">
+                            Last Tx: 0x8f2a...f42c1
+                        </div>
+</div>
+<div class="bg-primary-fixed p-6 border border-outline-variant">
+<div class="flex items-center gap-3 mb-4 text-on-primary-fixed">
+<span class="material-symbols-outlined">link</span>
+<h3 class="font-bold text-body-lg uppercase tracking-wider">Verificación de Integridad</h3>
+</div>
+<p class="text-body-md text-on-primary-fixed-variant">
+                            Compare el registro físico con la huella digital digital para validar que la humedad y el peso coinciden con el origen.
+                        </p>
+</div>
+<div class="relative h-48 w-full overflow-hidden border border-outline-variant">
+<div class="absolute inset-0 z-10 bg-gradient-to-t from-primary/60 to-transparent"></div>
+<img class="w-full h-full object-cover" data-alt="A macro shot of premium organic coffee beans being poured into a technical weighing scale, focus on the texture of the beans, industrial setting with professional lighting, deep earth tones and metallic reflections." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQAvfu3BSNZJC7OrUpDiUA9lImR9AT8fKQmBezDVjkX3_DwKNK0PaIgpr3lxB_5Ct-fa2XhxE-eAY3f7Qv_64SJPEWCU2TwarNDhqxtrkmeEUDKPE6r18nBKDkDTeGfFYQ41PsHBNbo2fX4ZOY5TOcPeQYjWo5ZXk7tbVBgkG-usCEEyl_Oz_3kJEHwTm1W9AiJ7Q5l79gZeSlC9eNW0qgGLwDTD9i8BT6q23PCSeoVTgEQploBLfq">
+<div class="absolute bottom-4 left-4 z-20">
+<p class="text-white font-bold text-headline-sm">Cosecha 2024</p>
+<p class="text-white/80 text-code-sm">Calidad Exportación AAA</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Records Table -->
+<div class="mt-stack-lg">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-headline-sm font-headline-sm text-primary">Registros del Día</h3>
+<div class="flex gap-2">
+<button class="px-4 py-2 bg-surface border border-outline-variant text-label-caps font-label-caps hover:bg-surface-variant transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">download</span> EXPORTAR
+                        </button>
+<button class="px-4 py-2 bg-surface border border-outline-variant text-label-caps font-label-caps hover:bg-surface-variant transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">print</span> IMPRIMIR
+                        </button>
+</div>
+</div>
+<div class="overflow-x-auto border border-outline-variant">
+<table class="w-full border-collapse">
+<thead>
+<tr class="bg-surface-container-highest border-b border-outline-variant">
+<th class="text-left p-4 text-label-caps font-label-caps text-on-surface-variant">ID LOTE</th>
+<th class="text-left p-4 text-label-caps font-label-caps text-on-surface-variant">PRODUCTOR</th>
+<th class="text-left p-4 text-label-caps font-label-caps text-on-surface-variant">PESO (KG)</th>
+<th class="text-left p-4 text-label-caps font-label-caps text-on-surface-variant">HUMEDAD</th>
+<th class="text-left p-4 text-label-caps font-label-caps text-on-surface-variant">BLOCKCHAIN STATUS</th>
+<th class="text-right p-4 text-label-caps font-label-caps text-on-surface-variant">ACCIONES</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<tr class="bg-white hover:bg-surface-container-low transition-colors">
+<td class="p-4 font-code-sm font-bold text-primary">#LOT-A402</td>
+<td class="p-4">
+<div class="flex flex-col">
+<span class="font-bold text-on-surface">Roberto Quispe</span>
+<span class="text-code-sm text-on-surface-variant">ID: 8821 • Taipiplaya</span>
+</div>
+</td>
+<td class="p-4 font-code-sm">1,240.50</td>
+<td class="p-4">
+<span class="px-2 py-1 bg-secondary-container text-on-secondary-container text-code-sm font-bold">11.8%</span>
+</td>
+<td class="p-4">
+<div class="flex items-center gap-2 text-secondary font-bold text-code-sm">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">link</span>
+                                        VERIFIED (0x7a...91)
+                                    </div>
+</td>
+<td class="p-4 text-right">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary">visibility</button>
+</td>
+</tr>
+<tr class="bg-surface-container-low/30 hover:bg-surface-container-low transition-colors">
+<td class="p-4 font-code-sm font-bold text-primary">#LOT-A401</td>
+<td class="p-4">
+<div class="flex flex-col">
+<span class="font-bold text-on-surface">Maria Condori</span>
+<span class="text-code-sm text-on-surface-variant">ID: 8755 • Yungas</span>
+</div>
+</td>
+<td class="p-4 font-code-sm">850.25</td>
+<td class="p-4">
+<span class="px-2 py-1 bg-secondary-container text-on-secondary-container text-code-sm font-bold">12.1%</span>
+</td>
+<td class="p-4">
+<div class="flex items-center gap-2 text-secondary font-bold text-code-sm">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">link</span>
+                                        VERIFIED (0x3c...2d)
+                                    </div>
+</td>
+<td class="p-4 text-right">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary">visibility</button>
+</td>
+</tr>
+<tr class="bg-white hover:bg-surface-container-low transition-colors">
+<td class="p-4 font-code-sm font-bold text-primary">#LOT-A400</td>
+<td class="p-4">
+<div class="flex flex-col">
+<span class="font-bold text-on-surface">Juan Perez</span>
+<span class="text-code-sm text-on-surface-variant">ID: 8690 • Beni</span>
+</div>
+</td>
+<td class="p-4 font-code-sm">2,100.00</td>
+<td class="p-4">
+<span class="px-2 py-1 bg-error-container text-error text-code-sm font-bold">14.2%</span>
+</td>
+<td class="p-4">
+<div class="flex items-center gap-2 text-on-surface-variant font-bold text-code-sm">
+<span class="material-symbols-outlined text-[18px] animate-spin">sync</span>
+                                        SYNCING...
+                                    </div>
+</td>
+<td class="p-4 text-right">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary">visibility</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+<!-- Overlay Success Interaction (Hidden by default) -->
+<div class="fixed inset-0 z-[100] bg-primary/90 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-500" id="blockchainOverlay">
+<div class="text-center text-white max-w-md p-8">
+<div class="mb-6 relative inline-block">
+<div class="w-24 h-24 border-4 border-secondary rounded-full flex items-center justify-center animate-blockchain">
+<span class="material-symbols-outlined text-5xl">lock</span>
+</div>
+</div>
+<h2 class="text-headline-lg font-headline-lg mb-2">Immutable Trust Created</h2>
+<p class="text-body-lg text-primary-fixed mb-8">El lote ha sido firmado digitalmente y el hash ha sido inyectado en el ledger principal.</p>
+<div class="bg-white/10 p-4 font-code-sm text-sm border border-white/20 rounded mb-8">
+                TX_ID: 0x892a771bce112009ab9921f00882e
+            </div>
+<button class="px-8 py-3 bg-secondary text-on-secondary font-bold tracking-widest text-label-caps hover:brightness-110 transition-all" onclick="closeOverlay()">CONTINUAR</button>
+</div>
+</div>
+<script>
+        const form = document.getElementById('acopioForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnLoader = document.getElementById('btnLoader');
+        const btnText = document.getElementById('btnText');
+        const overlay = document.getElementById('blockchainOverlay');
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            // Show loading state
+            btnLoader.classList.remove('hidden');
+            btnText.style.opacity = '0';
+            submitBtn.disabled = true;
+
+            // Simulate blockchain processing
+            setTimeout(() => {
+                overlay.classList.remove('opacity-0', 'pointer-events-none');
+                
+                // Reset form state after delay
+                setTimeout(() => {
+                    btnLoader.classList.add('hidden');
+                    btnText.style.opacity = '1';
+                    submitBtn.disabled = false;
+                    form.reset();
+                }, 1000);
+            }, 1500);
+        });
+
+        function closeOverlay() {
+            overlay.classList.add('opacity-0', 'pointer-events-none');
+        }
+
+        // Add micro-interactions to inputs
+        document.querySelectorAll('input, select, textarea').forEach(el => {
+            el.addEventListener('focus', () => {
+                el.parentElement.classList.add('scale-[1.01]');
+            });
+            el.addEventListener('blur', () => {
+                el.parentElement.classList.remove('scale-[1.01]');
+            });
+        });
+    </script>
+
+
+</body></html>
