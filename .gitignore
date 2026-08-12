@@ -33,3 +33,11 @@ yarn-error.log*
 
 # Vercel
 .vercel
+
+# Claude & Stitch
+.claude/
+*stitch*
+
+# Workflows
+*workflow*
+*Workflow*
