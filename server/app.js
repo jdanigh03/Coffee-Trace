@@ -3,6 +3,29 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 
 import { uno } from './db.js'
+
+/**
+ * Describe una cadena de conexion sin revelarla: solo host, puerto y usuario.
+ * La contrasena nunca se incluye.
+ */
+function describirCadena(valor) {
+  if (!valor) return 'ausente'
+  const limpio = valor.trim()
+  if (limpio !== valor) return 'presente pero con espacios al inicio o al final'
+  try {
+    const u = new URL(limpio)
+    return {
+      host: u.hostname,
+      puerto: u.port,
+      usuario: u.username,
+      modo: u.port === '6543' ? 'transaction pooler (correcto para serverless)'
+          : u.hostname.startsWith('db.') ? 'conexion directa (NO funciona en Vercel: solo IPv6)'
+          : 'otro',
+    }
+  } catch {
+    return 'presente pero no es una URL valida'
+  }
+}
 import lotRoutes from './routes/lots.js'
 import producerRoutes from './routes/producers.js'
 import blockchainRoutes from './routes/blockchain.js'
@@ -40,6 +63,20 @@ app.get('/api/health', async (req, res) => {
   } catch (e) {
     salida.status = 'degraded'
     salida.base = { conectada: false, error: e.message }
+
+    // Diagnostico: por que no llega la cadena de conexion. Se reportan
+    // NOMBRES y forma, nunca el valor: la contrasena no sale de aqui.
+    const u = process.env.SUPABASE_DB_URL ?? process.env.DATABASE_URL
+    salida.diagnostico = {
+      entorno: process.env.VERCEL ? `vercel/${process.env.VERCEL_ENV ?? '?'}` : 'local',
+      SUPABASE_DB_URL: describirCadena(process.env.SUPABASE_DB_URL),
+      DATABASE_URL: describirCadena(process.env.DATABASE_URL),
+      // Delata nombres mal escritos: espacios, minusculas, prefijos sobrantes.
+      variablesParecidas: Object.keys(process.env)
+        .filter((k) => /SUPA|DATABASE|POSTGRES|PG_/i.test(k))
+        .map((k) => JSON.stringify(k)),
+      usable: Boolean(u),
+    }
   }
   // Fabric aun no esta desplegado. No se reporta una red que no existe.
   salida.blockchain = { redDesplegada: false }
