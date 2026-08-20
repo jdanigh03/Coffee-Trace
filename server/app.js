@@ -67,14 +67,26 @@ app.get('/api/health', async (req, res) => {
     // Diagnostico: por que no llega la cadena de conexion. Se reportan
     // NOMBRES y forma, nunca el valor: la contrasena no sale de aqui.
     const u = process.env.SUPABASE_DB_URL ?? process.env.DATABASE_URL
+
+    // Nombres que pone la plataforma. Todo lo demas lo configuro el usuario:
+    // si esa lista sale vacia, el proyecto no tiene NINGUNA variable propia.
+    const DEL_SISTEMA = /^(VERCEL|AWS|LAMBDA|_|NODE|PATH|HOME|PWD|SHLVL|TZ|LANG|TERM|HOSTNAME|npm_)/i
+
     salida.diagnostico = {
       entorno: process.env.VERCEL ? `vercel/${process.env.VERCEL_ENV ?? '?'}` : 'local',
+      proyecto: process.env.VERCEL_PROJECT_PRODUCTION_URL
+        ?? process.env.VERCEL_URL ?? 'desconocido',
+      rama: process.env.VERCEL_GIT_COMMIT_REF ?? '?',
+      commit: (process.env.VERCEL_GIT_COMMIT_SHA ?? '').slice(0, 7) || '?',
       SUPABASE_DB_URL: describirCadena(process.env.SUPABASE_DB_URL),
       DATABASE_URL: describirCadena(process.env.DATABASE_URL),
       // Delata nombres mal escritos: espacios, minusculas, prefijos sobrantes.
       variablesParecidas: Object.keys(process.env)
         .filter((k) => /SUPA|DATABASE|POSTGRES|PG_/i.test(k))
         .map((k) => JSON.stringify(k)),
+      // Solo NOMBRES, nunca valores.
+      variablesPropias: Object.keys(process.env).filter((k) => !DEL_SISTEMA.test(k)).sort(),
+      totalVariables: Object.keys(process.env).length,
       usable: Boolean(u),
     }
   }
