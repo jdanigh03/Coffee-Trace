@@ -1,0 +1,126 @@
+# ============================================================
+# Configuracion del canal de trazabilidad
+#
+# La decision central esta en las politicas: ASOCAFE registra sola su
+# operacion diaria, pero NO puede emitir sola un certificado de origen
+# organico. Ese endoso conjunto con la certificadora es lo que un comprador
+# puede verificar y lo que un Excel no puede ofrecer.
+# ============================================================
+
+Organizations:
+  - &OrdererOrg
+    Name: OrdererOrg
+    ID: OrdererMSP
+    MSPDir: ../organizations/ordererOrganizations/coffeetrace.bo/msp
+    Policies:
+      Readers:     { Type: Signature, Rule: "OR('OrdererMSP.member')" }
+      Writers:     { Type: Signature, Rule: "OR('OrdererMSP.member')" }
+      Admins:      { Type: Signature, Rule: "OR('OrdererMSP.admin')" }
+    OrdererEndpoints:
+      - orderer.coffeetrace.bo:7050
+
+  - &Asocafe
+    Name: AsocafeMSP
+    ID: AsocafeMSP
+    MSPDir: ../organizations/peerOrganizations/asocafe.coffeetrace.bo/msp
+    Policies:
+      Readers:     { Type: Signature, Rule: "OR('AsocafeMSP.admin','AsocafeMSP.peer','AsocafeMSP.client')" }
+      Writers:     { Type: Signature, Rule: "OR('AsocafeMSP.admin','AsocafeMSP.client')" }
+      Admins:      { Type: Signature, Rule: "OR('AsocafeMSP.admin')" }
+      Endorsement: { Type: Signature, Rule: "OR('AsocafeMSP.peer')" }
+    AnchorPeers:
+      - Host: peer0.asocafe.coffeetrace.bo
+        Port: 7051
+
+  - &Certificadora
+    Name: CertificadoraMSP
+    ID: CertificadoraMSP
+    MSPDir: ../organizations/peerOrganizations/certificadora.coffeetrace.bo/msp
+    Policies:
+      Readers:     { Type: Signature, Rule: "OR('CertificadoraMSP.admin','CertificadoraMSP.peer','CertificadoraMSP.client')" }
+      Writers:     { Type: Signature, Rule: "OR('CertificadoraMSP.admin','CertificadoraMSP.client')" }
+      Admins:      { Type: Signature, Rule: "OR('CertificadoraMSP.admin')" }
+      Endorsement: { Type: Signature, Rule: "OR('CertificadoraMSP.peer')" }
+    AnchorPeers:
+      - Host: peer0.certificadora.coffeetrace.bo
+        Port: 9051
+
+  # El comprador solo lee. No endosa: no tiene por que poder escribir en la
+  # trazabilidad del productor.
+  - &Comprador
+    Name: CompradorMSP
+    ID: CompradorMSP
+    MSPDir: ../organizations/peerOrganizations/comprador.coffeetrace.bo/msp
+    Policies:
+      Readers:     { Type: Signature, Rule: "OR('CompradorMSP.admin','CompradorMSP.peer','CompradorMSP.client')" }
+      Writers:     { Type: Signature, Rule: "OR('CompradorMSP.admin')" }
+      Admins:      { Type: Signature, Rule: "OR('CompradorMSP.admin')" }
+      Endorsement: { Type: Signature, Rule: "OR('CompradorMSP.peer')" }
+    AnchorPeers:
+      - Host: peer0.comprador.coffeetrace.bo
+        Port: 11051
+
+Capabilities:
+  Channel: &ChannelCapabilities   { V2_0: true }
+  Orderer: &OrdererCapabilities   { V2_0: true }
+  Application: &ApplicationCapabilities { V2_5: true }
+
+Application: &ApplicationDefaults
+  Organizations:
+  Policies:
+    Readers:              { Type: ImplicitMeta, Rule: "ANY Readers" }
+    Writers:              { Type: ImplicitMeta, Rule: "ANY Writers" }
+    Admins:               { Type: ImplicitMeta, Rule: "MAJORITY Admins" }
+    LifecycleEndorsement: { Type: ImplicitMeta, Rule: "MAJORITY Endorsement" }
+    # El endoso por defecto exige AsocafeMSP. Las operaciones que ademas
+    # necesitan a la certificadora se fijan con state-based endorsement sobre
+    # las claves certificado~* desde el chaincode o con collections.
+    Endorsement:          { Type: Signature, Rule: "OR('AsocafeMSP.peer')" }
+  Capabilities:
+    <<: *ApplicationCapabilities
+
+Orderer: &OrdererDefaults
+  OrdererType: etcdraft
+  Addresses:
+    - orderer.coffeetrace.bo:7050
+  EtcdRaft:
+    Consenters:
+      - Host: orderer.coffeetrace.bo
+        Port: 7050
+        ClientTLSCert: ../organizations/ordererOrganizations/coffeetrace.bo/orderers/orderer.coffeetrace.bo/tls/server.crt
+        ServerTLSCert: ../organizations/ordererOrganizations/coffeetrace.bo/orderers/orderer.coffeetrace.bo/tls/server.crt
+  BatchTimeout: 2s
+  BatchSize:
+    MaxMessageCount: 10
+    AbsoluteMaxBytes: 99 MB
+    PreferredMaxBytes: 512 KB
+  Organizations:
+  Policies:
+    Readers:         { Type: ImplicitMeta, Rule: "ANY Readers" }
+    Writers:         { Type: ImplicitMeta, Rule: "ANY Writers" }
+    Admins:          { Type: ImplicitMeta, Rule: "MAJORITY Admins" }
+    BlockValidation: { Type: ImplicitMeta, Rule: "ANY Writers" }
+
+Channel: &ChannelDefaults
+  Policies:
+    Readers: { Type: ImplicitMeta, Rule: "ANY Readers" }
+    Writers: { Type: ImplicitMeta, Rule: "ANY Writers" }
+    Admins:  { Type: ImplicitMeta, Rule: "MAJORITY Admins" }
+  Capabilities:
+    <<: *ChannelCapabilities
+
+Profiles:
+  # Canal unico de trazabilidad.
+  TrazabilidadChannel:
+    <<: *ChannelDefaults
+    Orderer:
+      <<: *OrdererDefaults
+      Organizations:
+        - *OrdererOrg
+      Capabilities: *OrdererCapabilities
+    Application:
+      <<: *ApplicationDefaults
+      Organizations:
+        - *Asocafe
+        - *Certificadora
+        - *Comprador

@@ -1,0 +1,22 @@
+[
+  {
+    "name": "datosProductores",
+    "policy": "OR('AsocafeMSP.member','CertificadoraMSP.member')",
+    "requiredPeerCount": 1,
+    "maxPeerCount": 2,
+    "blockToLive": 0,
+    "memberOnlyRead": true,
+    "memberOnlyWrite": true,
+    "comentario": "Nombres, parcelas y kg por socio. El comprador NO lo ve: el ledger comun solo guarda el hash. Los compradores estan en Alemania, y datos personales en un ledger inmutable chocan con el derecho de supresion del RGPD."
+  },
+  {
+    "name": "datosComerciales",
+    "policy": "OR('AsocafeMSP.member','CompradorMSP.member')",
+    "requiredPeerCount": 1,
+    "maxPeerCount": 2,
+    "blockToLive": 0,
+    "memberOnlyRead": true,
+    "memberOnlyWrite": true,
+    "comentario": "Precios, contratos y montos. La certificadora no necesita verlos y un comprador no debe ver lo que paga otro."
+  }
+]

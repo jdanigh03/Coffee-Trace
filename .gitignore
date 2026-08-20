@@ -1,43 +1,87 @@
-# Dependencies
+# ============================================================
+# CoffeeTrace - repositorio para despliegue en Vercel
+#
+# Se sube el CODIGO. No se suben datos de personas reales, secretos,
+# dependencias ni artefactos de build (Vercel los genera).
+# ============================================================
+
+# ------------------------------------------------------------
+# DATOS PERSONALES - nunca al repositorio
+# ------------------------------------------------------------
+# Los Excel de trazabilidad traen nombres, comunidades y montos pagados de
+# 102 productores reales. En un repositorio publico eso es exponer datos
+# personales y financieros de terceros.
+trazabilidad*/
+trazabilidad*.rar
+*.xlsx
+*.xls
+
+# CSV generados por el ETL: mismo contenido, mismo problema.
+db/out/
+
+# ------------------------------------------------------------
+# Secretos
+# ------------------------------------------------------------
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Material criptografico de Fabric: incluye claves privadas de las
+# identidades MSP. Se regenera con cryptogen.
+blockchain/organizations/
+wallet/
+*.pem
+*.key
+
+# ------------------------------------------------------------
+# Dependencias
+# ------------------------------------------------------------
 node_modules/
 .pnp
 .pnp.js
 
-# Production
-build/
+# ------------------------------------------------------------
+# Artefactos de build (Vercel los genera en cada despliegue)
+# ------------------------------------------------------------
 dist/
+build/
+client/dist/
+blockchain/chaincode/dist/
+*.tsbuildinfo
+.vercel
 
-# Environment variables
-.env
-.env.local
-.env.*.local
+# ------------------------------------------------------------
+# Diseno y documentacion de origen
+# ------------------------------------------------------------
+# Maquetas de Stitch: ~12 capturas PNG que no hacen falta para desplegar.
+stitch_trazabilidad_blockchain_asocaf_taipiplaya/
 
-# IDE
+# Diagramas del workflow original (3,3 MB en PNG).
+# Patron acotado a la raiz a proposito: un `*workflow*` suelto ignoraria
+# tambien .github/workflows/ y romperia las GitHub Actions.
+/Workflow*.png
+/Workflow*.txt
+
+# ------------------------------------------------------------
+# Herramientas y temporales
+# ------------------------------------------------------------
+.claude/
+__pycache__/
+*.py[cod]
+.eslintcache
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ------------------------------------------------------------
+# Editor y sistema operativo
+# ------------------------------------------------------------
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 .DS_Store
-
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Build
-*.tsbuildinfo
-
-# Cache
-.eslintcache
-
-# Vercel
-.vercel
-
-# Claude & Stitch
-.claude/
-*stitch*
-
-# Workflows
-*workflow*
-*Workflow*
+Thumbs.db

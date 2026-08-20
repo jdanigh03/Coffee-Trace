@@ -1,197 +1,172 @@
-import { CheckCircle, Clock, AlertCircle, TrendingUp } from 'lucide-react'
-import PhaseStepper from '../components/PhaseStepper'
-import { ProcessPhase } from '../types'
+import { Link } from 'react-router-dom'
+import { Package, Users, Scale, AlertTriangle, ArrowRight } from 'lucide-react'
+import { api } from '../api/client'
+import { useApi, fmtBs, fmtKg } from '../api/useApi'
 
-const mockLots = [
-  {
-    id: '#TAI-2023-882',
-    phase: 'Selección Física',
-    plant: 'Taipiplaya',
-    weight: 12450.00,
-    hash: '0x8a2f...1e39',
-    status: 'verified'
-  },
-  {
-    id: '#ALT-2023-814',
-    phase: 'Trillado',
-    plant: 'El Alto',
-    weight: 8900.25,
-    hash: 'Sincronizando',
-    status: 'syncing'
-  },
-  {
-    id: '#TAI-2023-879',
-    phase: 'Almacenamiento',
-    plant: 'Taipiplaya',
-    weight: 15000.00,
-    hash: '0x7c6e...d821',
-    status: 'verified'
-  },
-  {
-    id: '#ALT-2023-811',
-    phase: 'Despacho',
-    plant: 'El Alto',
-    weight: 24000.00,
-    hash: '0x5b1a...f982',
-    status: 'verified'
+const CAMPANIA = 2025
+
+function Tarjeta({ icono, titulo, valor, pie, tono = 'coffee' }: {
+  icono: React.ReactNode; titulo: string; valor: string; pie?: string
+  tono?: 'coffee' | 'sky' | 'amber'
+}) {
+  const tonos = {
+    coffee: 'bg-amber-50 text-amber-800 border-amber-200',
+    sky: 'bg-sky-50 text-sky-800 border-sky-200',
+    amber: 'bg-orange-50 text-orange-800 border-orange-200',
   }
-]
-
-const stats = [
-  { label: 'Humedad Promedio', value: '11.8', unit: '%' },
-  { label: 'Total Recibido (Hoy)', value: '42.5', unit: 'Tn' },
-  { label: 'Tasa de Rendimiento', value: '78.2', unit: '%' },
-  { label: 'Contenedores en Puerto', value: '04', unit: 'Und' }
-]
-
-const features = [
-  {
-    icon: CheckCircle,
-    title: 'Trazabilidad Garantizada',
-    description: 'Cada movimiento genera un hash único inmutable en blockchain.'
-  },
-  {
-    icon: TrendingUp,
-    title: 'Consultas y Reportes',
-    description: 'Filtros dinámicos por lote, productor o período de cosecha.'
-  },
-  {
-    icon: AlertCircle,
-    title: 'Verificación de Integridad',
-    description: 'Comprobación en tiempo real de hashes locales vs blockchain.'
-  },
-  {
-    icon: Clock,
-    title: 'Roles Involucrados',
-    description: 'Gestión de accesos para recepción, selección y comercialización.'
-  }
-]
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg p-5">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-xs font-semibold text-gray-500 uppercase">{titulo}</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{valor}</p>
+          {pie && <p className="text-xs text-gray-500 mt-1">{pie}</p>}
+        </div>
+        <div className={`p-2 rounded-lg border ${tonos[tono]}`}>{icono}</div>
+      </div>
+    </div>
+  )
+}
 
 export default function Dashboard() {
+  const { datos, cargando, error } = useApi(() => api.dashboard(CAMPANIA), [])
+
+  if (cargando) {
+    return <div className="p-8 text-gray-500">Cargando datos de la campaña {CAMPANIA}...</div>
+  }
+  if (error || !datos) {
+    return (
+      <div className="p-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-5 flex gap-3">
+          <AlertTriangle className="text-red-600 shrink-0" />
+          <div>
+            <p className="font-semibold text-red-900">No se pudieron cargar los datos</p>
+            <p className="text-sm text-red-800 mt-1">{error}</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const { resumen, porCertificacion, porMes, lotes, inconsistencias } = datos
+  const maxMes = Math.max(...porMes.map((m) => m.kg_guinda), 1)
+
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="bg-white rounded-lg p-6 border border-gray-200">
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Trazabilidad en Tiempo Real</h1>
-            <p className="text-gray-600 mt-1">Monitoreo integral desde transporte hasta exportación final.</p>
-          </div>
-          <div className="px-4 py-2 bg-green-50 border border-green-200 rounded-lg text-sm font-medium text-green-700">
-            ● Blockchain Status: Online
-          </div>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Campaña {datos.campania}</h1>
+        <p className="text-gray-600">Trazabilidad de café · ASOCAFE Taipiplaya</p>
       </div>
 
-      {/* Process Flow */}
-      <PhaseStepper currentPhase={ProcessPhase.LIMPIEZA} />
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Tarjeta icono={<Scale size={20} />} titulo="Café guinda acopiado"
+          valor={`${fmtKg(resumen.kg_guinda)} kg`}
+          pie={`${resumen.entregas.toLocaleString('es-BO')} entregas`} />
+        <Tarjeta icono={<Users size={20} />} titulo="Productores" tono="sky"
+          valor={String(resumen.productores)} pie="con entregas en la campaña" />
+        <Tarjeta icono={<Package size={20} />} titulo="Pagado a productores"
+          valor={`${fmtBs(resumen.total_pagado_bs)} Bs`} tono="sky" />
+        <Tarjeta icono={<AlertTriangle size={20} />} titulo="Entregas observadas"
+          valor={String(resumen.observadas)} tono="amber"
+          pie={`${((resumen.observadas / resumen.entregas) * 100).toFixed(1)}% del total`} />
+      </div>
 
-      {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Active Lots */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-bold text-gray-900">Lotes Activos en Proceso</h2>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">ID LOTE</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">ETAPA ACTUAL</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">PLANTA</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">PESO (KG)</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">ESTADO BLOCKCHAIN</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {mockLots.map((lot, idx) => (
-                    <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <a href="#" className="text-sky-600 font-semibold hover:underline">{lot.id}</a>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">● {lot.phase}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{lot.plant}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600 font-semibold">{lot.weight.toLocaleString()}</td>
-                      <td className="px-6 py-4">
-                        {lot.status === 'verified' ? (
-                          <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
-                            ∞ {lot.hash}
-                          </span>
-                        ) : (
-                          <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
-                            ↻ {lot.hash}
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        {/* Security Info */}
-        <div className="space-y-6">
-          <div className="bg-gradient-to-br from-coffee-700 to-coffee-900 text-white rounded-lg p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <CheckCircle size={24} />
-              <h3 className="text-lg font-bold">Seguridad de Datos</h3>
-            </div>
-            <p className="text-sm text-coffee-100 mb-4">
-              Cada transacción en CoffeeTrace genera un Hash SHA-256 único inmutable. Los datos son replicados en el registro público para garantizar la transparencia ante compradores internacionales.
+      {inconsistencias > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
+          <AlertTriangle className="text-amber-700 shrink-0 mt-0.5" size={18} />
+          <div className="flex-1">
+            <p className="font-semibold text-amber-900">
+              {inconsistencias} registros necesitan revisión antes de sellarse en blockchain
             </p>
-            <div className="bg-coffee-600 rounded px-3 py-2 text-xs font-mono text-coffee-100 mb-3">
-              Last Tx: 0x8f2a...f42c1
-            </div>
+            <p className="text-sm text-amber-800 mt-1">
+              Sellar un dato que sabemos que está mal lo vuelve inmutablemente mal. La cola de
+              blockchain los rechaza hasta que se corrijan.
+            </p>
           </div>
+          <Link to="/consultas"
+            className="text-sm font-medium text-amber-900 hover:underline flex items-center gap-1 shrink-0">
+            Ver lista <ArrowRight size={14} />
+          </Link>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white border border-gray-200 rounded-lg p-5">
+          <h2 className="font-semibold text-gray-900 mb-4">Acopio por mes</h2>
+          <div className="space-y-2">
+            {porMes.map((m) => (
+              <div key={m.mes} className="flex items-center gap-3 text-sm">
+                <span className="w-16 text-gray-600 shrink-0">{m.mes}</span>
+                <div className="flex-1 bg-gray-100 rounded h-5 relative overflow-hidden">
+                  <div className="bg-amber-600 h-full rounded"
+                    style={{ width: `${(m.kg_guinda / maxMes) * 100}%` }} />
+                </div>
+                <span className="w-24 text-right text-gray-700 shrink-0">{fmtKg(m.kg_guinda)} kg</span>
+                <span className="w-20 text-right text-gray-500 shrink-0">{m.precio_promedio} Bs/lata</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-gray-500 mt-3">
+            El precio por lata subió de 44 a 143 Bs a lo largo de la campaña.
+          </p>
+        </div>
+
+        <div className="bg-white border border-gray-200 rounded-lg p-5">
+          <h2 className="font-semibold text-gray-900 mb-4">Por certificación</h2>
+          <div className="space-y-3">
+            {porCertificacion.map((c) => (
+              <div key={c.certificacion} className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium capitalize text-gray-900">{c.certificacion}</p>
+                  <p className="text-xs text-gray-500">{c.lotes} lotes</p>
+                </div>
+                <p className="font-semibold text-gray-900">{fmtKg(c.kg_guinda)} kg</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-gray-500 mt-4 pt-3 border-t">
+            Orgánico y transición se manejan en lotes separados físicamente, con señalización.
+            Un lote nunca mezcla ambos.
+          </p>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {stats.map((stat, idx) => (
-          <div key={idx} className="bg-white rounded-lg p-4 border border-gray-200">
-            <p className="text-xs text-gray-600 font-semibold uppercase mb-2">{stat.label}</p>
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-gray-900">{stat.value}</span>
-              <span className="text-sm text-gray-600">{stat.unit}</span>
-            </div>
-            <div className="mt-3 h-1 bg-gray-200 rounded-full overflow-hidden">
-              <div className="h-full bg-coffee-600 rounded-full" style={{ width: `${Number(stat.value)}%` }} />
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Features */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {features.map((feature, idx) => {
-          const Icon = feature.icon
-          return (
-            <div key={idx} className="bg-white rounded-lg p-6 border border-gray-200 hover:shadow-lg transition">
-              <div className="flex items-start gap-4">
-                <div className="p-3 bg-sky-100 rounded-lg text-sky-600">
-                  <Icon size={20} />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">{feature.title}</h3>
-                  <p className="text-sm text-gray-600">{feature.description}</p>
-                </div>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Verify Button */}
-      <div className="flex gap-4">
-        <button className="px-6 py-3 bg-coffee-700 text-white font-medium rounded-lg hover:bg-coffee-800 transition">
-          ✓ Verificar Lote
-        </button>
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <h2 className="font-semibold text-gray-900 p-5 pb-3">Lotes de la campaña</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
+              <tr>
+                <th className="px-5 py-2 font-semibold">Lote</th>
+                <th className="px-5 py-2 font-semibold">Certificación</th>
+                <th className="px-5 py-2 font-semibold">Estado</th>
+                <th className="px-5 py-2 font-semibold text-right">Entregas</th>
+                <th className="px-5 py-2 font-semibold text-right">Guinda (kg)</th>
+                <th className="px-5 py-2 font-semibold text-right">Observadas</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {lotes.map((l) => (
+                <tr key={l.codigo} className="hover:bg-gray-50">
+                  <td className="px-5 py-2 font-mono font-medium">
+                    <Link to={`/consultas?lote=${l.codigo}`} className="text-sky-700 hover:underline">
+                      {l.codigo}
+                    </Link>
+                  </td>
+                  <td className="px-5 py-2 capitalize">{l.certificacion}</td>
+                  <td className="px-5 py-2 capitalize text-gray-600">{l.estado}</td>
+                  <td className="px-5 py-2 text-right">{l.entregas}</td>
+                  <td className="px-5 py-2 text-right">{fmtKg(l.kg_guinda_real)}</td>
+                  <td className="px-5 py-2 text-right">
+                    {l.entregas_observadas > 0
+                      ? <span className="text-amber-700 font-medium">{l.entregas_observadas}</span>
+                      : <span className="text-gray-400">0</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   )

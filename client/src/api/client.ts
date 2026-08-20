@@ -1,0 +1,201 @@
+/**
+ * Cliente del API de CoffeeTrace.
+ *
+ * En desarrollo Vite hace proxy de /api al backend. En produccion la variable
+ * VITE_API_URL apunta al host del API, porque el frontend puede estar en
+ * Vercel y el backend en un contenedor aparte.
+ */
+const BASE = import.meta.env.VITE_API_URL ?? ''
+
+export class ApiError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message)
+    this.name = 'ApiError'
+  }
+}
+
+async function pedir<T>(ruta: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${BASE}/api${ruta}`, {
+    headers: { 'Content-Type': 'application/json' },
+    ...init,
+  })
+  const cuerpo = await res.json().catch(() => ({}))
+  if (!res.ok || cuerpo.success === false) {
+    throw new ApiError(cuerpo.error ?? `Error ${res.status}`, res.status)
+  }
+  return (cuerpo.data ?? cuerpo) as T
+}
+
+// ---------------------------------------------------------------- tipos
+
+export type Certificacion = 'organico' | 'transicion'
+export type Revision = 'ok' | 'observado' | 'corregido'
+
+export interface LoteResumen {
+  id: string
+  codigo: string
+  campania_id: number
+  certificacion: Certificacion
+  estado: string
+  entregas: number
+  kg_guinda_real: number
+  latas: number
+  total_pagado_bs: number
+  entregas_observadas: number
+  kg_pergamino_calc: number | null
+  kg_verde_oro_calc: number | null
+}
+
+export interface LoteDetalle extends LoteResumen {
+  kg_mote_calc: number | null
+  envio: {
+    fecha_salida: string
+    fecha_llegada: string | null
+    kg_pergamino_despachado: number | null
+    kg_pergamino_recibido: number | null
+    diferencia_kg: number | null
+    nota_remision: string | null
+    vehiculo: string | null
+    conductor: string | null
+  } | null
+  beneficio: {
+    id: string
+    kg_pergamino_entrada: number
+    kg_trillado_calc: number | null
+    kg_verde_calc: number | null
+    kg_caracol_calc: number | null
+    kg_descarte_calc: number | null
+    kg_verde_real: number | null
+    rendimiento_pct: number | null
+  } | null
+  muestras: { tipo: string; kg: number; fecha: string; motivo: string | null }[]
+  despachos: {
+    fecha_despacho: string; kg_neto: number | null; kg_asignados: number
+    numero: string | null; cliente: string | null; pais: string | null
+  }[]
+  reconciliacion: {
+    kg_acopio: number; kg_beneficio: number; diferencia: number; estado: string
+  } | null
+  sellosBlockchain: {
+    tabla_origen: string; hash_sha256: string; tx_id: string | null
+    block_number: number | null; sellado_en: string
+  }[]
+  productores: {
+    nombre_excel: string; persona: string | null; fuente: string | null
+    kg_guinda: number; kg_verde_export: number; revision: Revision
+  }[]
+}
+
+export interface Entrega {
+  id: number
+  fecha: string
+  codigo_productor: string
+  nombre_excel: string
+  comunidad: string | null
+  kg_guinda_real: number
+  latas: number
+  precio_unitario_bs: number
+  total_pagado_bs: number
+  estatus_declarado: string | null
+  revision: Revision
+  revision_nota: string | null
+}
+
+export interface Productor {
+  id: string
+  nombre: string
+  activo: boolean
+  afiliacion: string | null
+  parcelas: number
+  comunidades: string | null
+  codigos: string | null
+  estatus: string | null
+  kg_guinda: number
+  entregas: number
+  total_pagado_bs: number
+}
+
+export interface Dashboard {
+  campania: number
+  resumen: {
+    entregas: number; productores: number; kg_guinda: number
+    total_pagado_bs: number; observadas: number
+  }
+  porCertificacion: { certificacion: Certificacion; lotes: number; kg_guinda: number }[]
+  porMes: { mes: string; kg_guinda: number; entregas: number; precio_promedio: number }[]
+  lotes: LoteResumen[]
+  inconsistencias: number
+}
+
+export interface EstadoBlockchain {
+  redDesplegada: boolean
+  cola: { pendiente: number; enviado: number; confirmado: number; error: number }
+  sellos: number
+  ultimoBloque: number | null
+  ultimoSello: string | null
+}
+
+export interface Reconciliacion {
+  codigo: string; certificacion: Certificacion
+  kg_acopio: number; kg_beneficio: number; diferencia: number; estado: string
+}
+
+export interface Rendimiento {
+  codigo: string; certificacion: Certificacion
+  pergamino_estimado: number | null
+  pergamino_despachado_real: number | null
+  verde_estimado: number | null
+  verde_real: number | null
+  rendimiento_pct: number | null
+  origen_del_dato: 'estimado' | 'medido'
+}
+
+export interface Inconsistencia {
+  id: number; fecha: string; codigo_excel: string; nombre_excel: string
+  kg_guinda_real: number; estatus_declarado: string | null
+  lote: string | null; lote_certificacion: Certificacion | null
+  revision: Revision; revision_nota: string | null
+}
+
+// ---------------------------------------------------------------- llamadas
+
+export const api = {
+  salud: () => pedir<{ status: string; base: { conectada: boolean; entregas?: number } }>('/health'),
+
+  lotes: (f: { certificacion?: string; campania?: number; estado?: string } = {}) => {
+    const p = new URLSearchParams(
+      Object.entries(f).filter(([, v]) => v != null).map(([k, v]) => [k, String(v)])
+    )
+    return pedir<LoteResumen[]>(`/lots${p.toString() ? `?${p}` : ''}`)
+  },
+  lote: (codigo: string) => pedir<LoteDetalle>(`/lots/${encodeURIComponent(codigo)}`),
+  entregasDeLote: (codigo: string) =>
+    pedir<Entrega[]>(`/lots/${encodeURIComponent(codigo)}/entregas`),
+  trazabilidad: (codigo: string) =>
+    pedir<Record<string, unknown>>(`/lots/${encodeURIComponent(codigo)}/trazabilidad`),
+
+  productores: (f: { campania?: number; comunidad?: string; buscar?: string } = {}) => {
+    const p = new URLSearchParams(
+      Object.entries(f).filter(([, v]) => v).map(([k, v]) => [k, String(v)])
+    )
+    return pedir<Productor[]>(`/producers${p.toString() ? `?${p}` : ''}`)
+  },
+  comunidades: () => pedir<{
+    id: number; nombre: string; prefijo_codigo: string
+    parcelas: number; productores: number; kg_guinda: number
+  }[]>('/producers/comunidades'),
+
+  dashboard: (campania = 2025) => pedir<Dashboard>(`/analytics/dashboard?campania=${campania}`),
+  rendimiento: () => pedir<Rendimiento[]>('/analytics/rendimiento'),
+  reconciliacion: () => pedir<Reconciliacion[]>('/analytics/reconciliacion'),
+  inconsistencias: (limit = 100) => pedir<Inconsistencia[]>(`/analytics/inconsistencias?limit=${limit}`),
+
+  estadoBlockchain: () => pedir<EstadoBlockchain>('/blockchain/status'),
+  cadenaDeLote: (codigo: string) =>
+    pedir<{ lote: string; sellos: unknown[]; verificacion: unknown }>(
+      `/blockchain/cadena/${encodeURIComponent(codigo)}`),
+  verificarHash: (hash: string, data: unknown, hashAnterior = '') =>
+    pedir<{ valido: boolean; hash: string; esperado: string; payloadCanonico: string; mensaje: string }>(
+      '/blockchain/verify',
+      { method: 'POST', body: JSON.stringify({ hash, data, hashAnterior }) }),
+}

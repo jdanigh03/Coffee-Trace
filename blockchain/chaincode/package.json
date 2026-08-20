@@ -1,0 +1,22 @@
+{
+  "name": "coffeetrace-chaincode",
+  "version": "1.0.0",
+  "description": "Chaincode de trazabilidad de cafe para ASOCAFE Taipiplaya",
+  "main": "dist/index.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "fabric-chaincode-node start",
+    "start:dev": "fabric-chaincode-node start --peer.address localhost:7052"
+  },
+  "dependencies": {
+    "fabric-contract-api": "^2.5.8",
+    "fabric-shim": "^2.5.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "@types/node": "^20.11.0"
+  }
+}

@@ -1,5 +1,8 @@
 import { create } from 'zustand'
-import type { User, BlockchainStatus, Lot, ProcessPhase } from '../types'
+import type { User, Lot, ProcessPhase } from '../types'
+import type { EstadoBlockchain } from '../api/client'
+
+type BlockchainStatus = EstadoBlockchain
 
 interface AppState {
   user: User | null
@@ -22,10 +25,14 @@ export const useAppStore = create<AppState>((set) => ({
   user: null,
   setUser: (user) => set({ user }),
 
+  // Estado inicial de una red que todavia no existe. NO se inventan nodos
+  // sincronizados: hasta que Fabric este desplegado, la UI dice la verdad.
   blockchainStatus: {
-    isOnline: false,
-    syncedNodes: 0,
-    totalNodes: 12,
+    redDesplegada: false,
+    cola: { pendiente: 0, enviado: 0, confirmado: 0, error: 0 },
+    sellos: 0,
+    ultimoBloque: null,
+    ultimoSello: null,
   },
   setBlockchainStatus: (status) => set({ blockchainStatus: status }),
 

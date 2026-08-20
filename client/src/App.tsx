@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { useEffect } from 'react'
 import { useAppStore } from './store'
+import { api } from './api/client'
 import Header from './components/Header'
 import Sidebar from './components/Sidebar'
 
@@ -52,27 +53,20 @@ function AppLayout() {
 }
 
 function App() {
-  const { setUser, setBlockchainStatus } = useAppStore()
+  const { setBlockchainStatus } = useAppStore()
 
   useEffect(() => {
-    // Simular inicialización del usuario
-    setUser({
-      id: '1',
-      name: 'M. Choque',
-      email: 'm.choque@coffeetrace.com',
-      role: 'operator',
-      plant: 'Taipiplaya',
-      permissions: ['read', 'write', 'verify']
-    })
+    // Estado real de la cola de sellado. No se simula: si el API no responde,
+    // el store conserva `redDesplegada: false`, que es la verdad hoy.
+    let vivo = true
+    api.estadoBlockchain()
+      .then((e) => { if (vivo) setBlockchainStatus(e) })
+      .catch(() => { /* el estado inicial ya refleja "no desplegada" */ })
+    return () => { vivo = false }
+  }, [setBlockchainStatus])
 
-    // Simular status blockchain
-    setBlockchainStatus({
-      isOnline: true,
-      lastSync: new Date().toISOString(),
-      syncedNodes: 12,
-      totalNodes: 12
-    })
-  }, [setUser, setBlockchainStatus])
+  // El usuario se establece al iniciar sesion. Hasta que exista Supabase Auth
+  // no hay sesion, y la UI lo muestra en vez de inventar un operador.
 
   return (
     <BrowserRouter>

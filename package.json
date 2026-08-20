@@ -9,12 +9,24 @@
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "build": "cd client && npm run build",
     "start": "node server/index.js",
-    "install-all": "npm install && cd client && npm install"
+    "install-all": "npm install && cd client && npm install",
+    "db:check": "node scripts/migrate.js --check",
+    "db:migrate": "node scripts/migrate.js",
+    "db:reset": "node scripts/migrate.js --reset --load",
+    "db:etl": "python scripts/etl_excel.py && python scripts/etl_beneficio.py",
+    "test:traza": "node scripts/test_trazabilidad.js",
+    "worker": "node server/worker/sellador.js",
+    "worker:once": "node server/worker/sellador.js --una-vuelta",
+    "chaincode:build": "cd blockchain/chaincode && npm run build",
+    "fabric:up": "cd blockchain/network && docker compose up -d",
+    "fabric:down": "cd blockchain/network && docker compose down -v"
   },
   "dependencies": {
-    "express": "^4.18.2",
+    "@supabase/ssr": "^0.12.4",
+    "@supabase/supabase-js": "^2.112.3",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
+    "express": "^4.18.2",
     "pg": "^8.11.3"
   },
   "devDependencies": {

@@ -1,0 +1,215 @@
+# ============================================================
+# Red Fabric de desarrollo para CoffeeTrace.
+#
+# Suficiente para un piloto o una demo: 3 organizaciones y un orderer en un
+# solo host. Para produccion los peers de cada organizacion van en hosts
+# distintos y el orderer necesita 3 nodos Raft, o no hay tolerancia a fallos.
+#
+# Requiere que los materiales criptograficos existan en ../organizations
+# (los genera scripts/generar-crypto.sh).
+# ============================================================
+
+volumes:
+  orderer.coffeetrace.bo:
+  peer0.asocafe.coffeetrace.bo:
+  peer0.certificadora.coffeetrace.bo:
+  peer0.comprador.coffeetrace.bo:
+
+networks:
+  coffeetrace:
+    name: coffeetrace_fabric
+
+services:
+
+  # ---------------------------------------------------------- orderer
+  orderer.coffeetrace.bo:
+    image: hyperledger/fabric-orderer:2.5
+    container_name: orderer.coffeetrace.bo
+    environment:
+      - FABRIC_LOGGING_SPEC=INFO
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_LISTENPORT=7050
+      - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
+      - ORDERER_GENERAL_TLS_ENABLED=true
+      - ORDERER_GENERAL_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_GENERAL_BOOTSTRAPMETHOD=none
+      - ORDERER_CHANNELPARTICIPATION_ENABLED=true
+      - ORDERER_ADMIN_LISTENADDRESS=0.0.0.0:7053
+      - ORDERER_ADMIN_TLS_ENABLED=true
+      - ORDERER_ADMIN_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_ADMIN_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_ADMIN_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_ADMIN_TLS_CLIENTROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+    volumes:
+      - ../organizations/ordererOrganizations/coffeetrace.bo/orderers/orderer.coffeetrace.bo/msp:/var/hyperledger/orderer/msp
+      - ../organizations/ordererOrganizations/coffeetrace.bo/orderers/orderer.coffeetrace.bo/tls:/var/hyperledger/orderer/tls
+      - orderer.coffeetrace.bo:/var/hyperledger/production/orderer
+    ports:
+      - "7050:7050"
+      - "7053:7053"
+    networks: [coffeetrace]
+
+  # ---------------------------------------------------------- ASOCAFE
+  peer0.asocafe.coffeetrace.bo:
+    image: hyperledger/fabric-peer:2.5
+    container_name: peer0.asocafe.coffeetrace.bo
+    environment:
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_ID=peer0.asocafe.coffeetrace.bo
+      - CORE_PEER_ADDRESS=peer0.asocafe.coffeetrace.bo:7051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.asocafe.coffeetrace.bo:7052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.asocafe.coffeetrace.bo:7051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.asocafe.coffeetrace.bo:7051
+      - CORE_PEER_LOCALMSPID=AsocafeMSP
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+      # CouchDB hace falta para las consultas por rango del chaincode.
+      - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb-asocafe:5984
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=${COUCHDB_USER:-admin}
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=${COUCHDB_PASSWORD:-adminpw}
+      - CORE_CHAINCODE_EXTERNALBUILDERS=[]
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=coffeetrace_fabric
+    volumes:
+      - /var/run/docker.sock:/host/var/run/docker.sock
+      - ../organizations/peerOrganizations/asocafe.coffeetrace.bo/peers/peer0.asocafe.coffeetrace.bo/msp:/etc/hyperledger/fabric/msp
+      - ../organizations/peerOrganizations/asocafe.coffeetrace.bo/peers/peer0.asocafe.coffeetrace.bo/tls:/etc/hyperledger/fabric/tls
+      - peer0.asocafe.coffeetrace.bo:/var/hyperledger/production
+    ports:
+      - "7051:7051"
+    depends_on: [couchdb-asocafe, orderer.coffeetrace.bo]
+    networks: [coffeetrace]
+
+  couchdb-asocafe:
+    image: couchdb:3.3
+    container_name: couchdb-asocafe
+    environment:
+      - COUCHDB_USER=${COUCHDB_USER:-admin}
+      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-adminpw}
+    ports:
+      - "5984:5984"
+    networks: [coffeetrace]
+
+  # ---------------------------------------------------------- Certificadora
+  peer0.certificadora.coffeetrace.bo:
+    image: hyperledger/fabric-peer:2.5
+    container_name: peer0.certificadora.coffeetrace.bo
+    environment:
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_ID=peer0.certificadora.coffeetrace.bo
+      - CORE_PEER_ADDRESS=peer0.certificadora.coffeetrace.bo:9051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:9051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.certificadora.coffeetrace.bo:9052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:9052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.certificadora.coffeetrace.bo:9051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.certificadora.coffeetrace.bo:9051
+      - CORE_PEER_LOCALMSPID=CertificadoraMSP
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+      - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb-certificadora:5984
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=${COUCHDB_USER:-admin}
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=${COUCHDB_PASSWORD:-adminpw}
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=coffeetrace_fabric
+    volumes:
+      - /var/run/docker.sock:/host/var/run/docker.sock
+      - ../organizations/peerOrganizations/certificadora.coffeetrace.bo/peers/peer0.certificadora.coffeetrace.bo/msp:/etc/hyperledger/fabric/msp
+      - ../organizations/peerOrganizations/certificadora.coffeetrace.bo/peers/peer0.certificadora.coffeetrace.bo/tls:/etc/hyperledger/fabric/tls
+      - peer0.certificadora.coffeetrace.bo:/var/hyperledger/production
+    ports:
+      - "9051:9051"
+    depends_on: [couchdb-certificadora, orderer.coffeetrace.bo]
+    networks: [coffeetrace]
+
+  couchdb-certificadora:
+    image: couchdb:3.3
+    container_name: couchdb-certificadora
+    environment:
+      - COUCHDB_USER=${COUCHDB_USER:-admin}
+      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-adminpw}
+    ports:
+      - "7984:5984"
+    networks: [coffeetrace]
+
+  # ---------------------------------------------------------- Comprador
+  peer0.comprador.coffeetrace.bo:
+    image: hyperledger/fabric-peer:2.5
+    container_name: peer0.comprador.coffeetrace.bo
+    environment:
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_ID=peer0.comprador.coffeetrace.bo
+      - CORE_PEER_ADDRESS=peer0.comprador.coffeetrace.bo:11051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:11051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.comprador.coffeetrace.bo:11052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:11052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.comprador.coffeetrace.bo:11051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.comprador.coffeetrace.bo:11051
+      - CORE_PEER_LOCALMSPID=CompradorMSP
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+      - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb-comprador:5984
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=${COUCHDB_USER:-admin}
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=${COUCHDB_PASSWORD:-adminpw}
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=coffeetrace_fabric
+    volumes:
+      - /var/run/docker.sock:/host/var/run/docker.sock
+      - ../organizations/peerOrganizations/comprador.coffeetrace.bo/peers/peer0.comprador.coffeetrace.bo/msp:/etc/hyperledger/fabric/msp
+      - ../organizations/peerOrganizations/comprador.coffeetrace.bo/peers/peer0.comprador.coffeetrace.bo/tls:/etc/hyperledger/fabric/tls
+      - peer0.comprador.coffeetrace.bo:/var/hyperledger/production
+    ports:
+      - "11051:11051"
+    depends_on: [couchdb-comprador, orderer.coffeetrace.bo]
+    networks: [coffeetrace]
+
+  couchdb-comprador:
+    image: couchdb:3.3
+    container_name: couchdb-comprador
+    environment:
+      - COUCHDB_USER=${COUCHDB_USER:-admin}
+      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-adminpw}
+    ports:
+      - "9984:5984"
+    networks: [coffeetrace]
+
+  # ---------------------------------------------------------- CLI
+  cli:
+    image: hyperledger/fabric-tools:2.5
+    container_name: coffeetrace-cli
+    tty: true
+    stdin_open: true
+    environment:
+      - GOPATH=/opt/gopath
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_ID=cli
+      - CORE_PEER_ADDRESS=peer0.asocafe.coffeetrace.bo:7051
+      - CORE_PEER_LOCALMSPID=AsocafeMSP
+      - CORE_PEER_TLS_ENABLED=true
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: /bin/bash
+    volumes:
+      - /var/run/docker.sock:/host/var/run/docker.sock
+      - ../organizations:/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations
+      - ../chaincode:/opt/gopath/src/github.com/hyperledger/fabric/peer/chaincode
+      - ./:/opt/gopath/src/github.com/hyperledger/fabric/peer/network
+    depends_on:
+      - peer0.asocafe.coffeetrace.bo
+      - peer0.certificadora.coffeetrace.bo
+    networks: [coffeetrace]

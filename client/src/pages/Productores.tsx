@@ -1,192 +1,119 @@
 import { useState } from 'react'
-import { Search, Plus, CheckCircle, AlertCircle, Eye } from 'lucide-react'
-
-const mockProducers = [
-  {
-    id: 'PROD-8821',
-    name: 'Roberto Quispe',
-    community: 'Taipiplaya - Central',
-    verified: true,
-    lastHarvest: '2024-08-06',
-    activeLotsCount: 3,
-    blockchainStatus: 'verified'
-  },
-  {
-    id: 'PROD-8755',
-    name: 'Maria Condori',
-    community: 'Yungas',
-    verified: true,
-    lastHarvest: '2024-08-05',
-    activeLotsCount: 2,
-    blockchainStatus: 'verified'
-  },
-  {
-    id: 'PROD-8690',
-    name: 'Juan Perez',
-    community: 'Beni',
-    verified: false,
-    lastHarvest: '2024-08-04',
-    activeLotsCount: 1,
-    blockchainStatus: 'pending'
-  },
-  {
-    id: 'PROD-8647',
-    name: 'Carlos Mamani',
-    community: 'La Paz',
-    verified: true,
-    lastHarvest: '2024-08-03',
-    activeLotsCount: 4,
-    blockchainStatus: 'verified'
-  }
-]
+import { Search, AlertTriangle } from 'lucide-react'
+import { api } from '../api/client'
+import { useApi, fmtBs, fmtKg } from '../api/useApi'
 
 export default function Productores() {
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filterVerified, setFilterVerified] = useState<'all' | 'verified' | 'unverified'>('all')
+  const [buscar, setBuscar] = useState('')
+  const [comunidad, setComunidad] = useState('')
 
-  const filtered = mockProducers.filter(p => {
-    const matchSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                       p.id.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchFilter = filterVerified === 'all' ||
-                       (filterVerified === 'verified' && p.verified) ||
-                       (filterVerified === 'unverified' && !p.verified)
-    return matchSearch && matchFilter
-  })
+  const { datos: comunidades } = useApi(() => api.comunidades(), [])
+  const { datos, cargando, error } = useApi(
+    () => api.productores({ buscar: buscar || undefined, comunidad: comunidad || undefined }),
+    [buscar, comunidad])
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestión de Productores</h1>
-          <p className="text-gray-600 mt-1">Registro y verificación de productores de café.</p>
-        </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-coffee-700 text-white font-medium rounded-lg hover:bg-coffee-800 transition">
-          <Plus size={20} />
-          Nuevo Productor
-        </button>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Productores</h1>
+        <p className="text-gray-600">Padrón de socios y su aporte a la campaña</p>
       </div>
 
-      {/* Search and Filters */}
-      <div className="bg-white rounded-lg p-4 border border-gray-200 space-y-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+      <div className="flex flex-wrap gap-3">
+        <div className="relative flex-1 min-w-[240px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
           <input
-            type="text"
-            placeholder="Buscar por nombre o ID..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+            value={buscar}
+            onChange={(e) => setBuscar(e.target.value)}
+            placeholder="Buscar por nombre..."
+            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm
+                       focus:outline-none focus:ring-2 focus:ring-sky-500"
           />
         </div>
-
-        <div className="flex gap-2">
-          <button
-            onClick={() => setFilterVerified('all')}
-            className={`px-4 py-2 rounded-lg font-medium transition ${
-              filterVerified === 'all'
-                ? 'bg-sky-500 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            Todos ({mockProducers.length})
-          </button>
-          <button
-            onClick={() => setFilterVerified('verified')}
-            className={`px-4 py-2 rounded-lg font-medium transition ${
-              filterVerified === 'verified'
-                ? 'bg-green-500 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            Verificados ({mockProducers.filter(p => p.verified).length})
-          </button>
-          <button
-            onClick={() => setFilterVerified('unverified')}
-            className={`px-4 py-2 rounded-lg font-medium transition ${
-              filterVerified === 'unverified'
-                ? 'bg-amber-500 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            Sin Verificar ({mockProducers.filter(p => !p.verified).length})
-          </button>
-        </div>
+        <select
+          value={comunidad}
+          onChange={(e) => setComunidad(e.target.value)}
+          className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white
+                     focus:outline-none focus:ring-2 focus:ring-sky-500"
+        >
+          <option value="">Todas las comunidades</option>
+          {comunidades?.map((c) => (
+            <option key={c.id} value={c.nombre}>{c.nombre} ({c.productores})</option>
+          ))}
+        </select>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex gap-2">
+          <AlertTriangle className="text-red-600 shrink-0" size={18} />
+          <p className="text-sm text-red-800">{error}</p>
+        </div>
+      )}
+
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+          <h2 className="font-semibold text-gray-900">
+            {cargando ? 'Cargando...' : `${datos?.length ?? 0} productores`}
+          </h2>
+          <p className="text-xs text-gray-500">Ordenados por kg aportados</p>
+        </div>
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">ID PRODUCTOR</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">NOMBRE</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">COMUNIDAD</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">ESTADO</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">LOTES ACTIVOS</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">BLOCKCHAIN</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">ACCIONES</th>
+                <th className="px-5 py-2 font-semibold">Productor</th>
+                <th className="px-5 py-2 font-semibold">Comunidad</th>
+                <th className="px-5 py-2 font-semibold">Códigos</th>
+                <th className="px-5 py-2 font-semibold">Estatus</th>
+                <th className="px-5 py-2 font-semibold">Afiliación</th>
+                <th className="px-5 py-2 font-semibold text-right">Entregas</th>
+                <th className="px-5 py-2 font-semibold text-right">Guinda (kg)</th>
+                <th className="px-5 py-2 font-semibold text-right">Pagado (Bs)</th>
               </tr>
             </thead>
-            <tbody>
-              {filtered.map((producer, idx) => (
-                <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50 transition">
-                  <td className="px-6 py-4">
-                    <a href="#" className="text-sky-600 font-semibold hover:underline">{producer.id}</a>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900 font-medium">{producer.name}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{producer.community}</td>
-                  <td className="px-6 py-4">
-                    {producer.verified ? (
-                      <div className="flex items-center gap-1 text-green-700">
-                        <CheckCircle size={16} />
-                        <span className="text-sm font-medium">Verificado</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1 text-amber-700">
-                        <AlertCircle size={16} />
-                        <span className="text-sm font-medium">Pendiente</span>
-                      </div>
+            <tbody className="divide-y divide-gray-100">
+              {datos?.map((p) => (
+                <tr key={p.id} className="hover:bg-gray-50">
+                  <td className="px-5 py-2 font-medium text-gray-900">{p.nombre}</td>
+                  <td className="px-5 py-2 text-gray-600">{p.comunidades ?? '--'}</td>
+                  <td className="px-5 py-2 font-mono text-xs text-gray-600">
+                    {p.codigos ?? '--'}
+                    {(p.codigos?.split(',').length ?? 0) > 1 && (
+                      <span className="ml-1 text-amber-700" title="Varios códigos para la misma persona">
+                        ({p.codigos!.split(',').length})
+                      </span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600 font-medium">{producer.activeLotsCount}</td>
-                  <td className="px-6 py-4 text-sm">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      producer.blockchainStatus === 'verified'
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-blue-100 text-blue-700'
-                    }`}>
-                      {producer.blockchainStatus === 'verified' ? '✓ Verificado' : '↻ Pendiente'}
-                    </span>
+                  <td className="px-5 py-2">
+                    {p.estatus && (
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                        p.estatus === 'E'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-sky-100 text-sky-800'}`}>
+                        {p.estatus}
+                      </span>
+                    )}
                   </td>
-                  <td className="px-6 py-4">
-                    <button className="p-2 text-gray-600 hover:bg-gray-200 rounded-lg transition">
-                      <Eye size={18} />
-                    </button>
-                  </td>
+                  <td className="px-5 py-2 capitalize text-gray-600">{p.afiliacion ?? '--'}</td>
+                  <td className="px-5 py-2 text-right">{p.entregas}</td>
+                  <td className="px-5 py-2 text-right">{fmtKg(p.kg_guinda)}</td>
+                  <td className="px-5 py-2 text-right">{fmtBs(p.total_pagado_bs)}</td>
                 </tr>
               ))}
+              {!cargando && datos?.length === 0 && (
+                <tr><td colSpan={8} className="px-5 py-8 text-center text-gray-500">
+                  Sin resultados
+                </td></tr>
+              )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg p-4 border border-gray-200">
-          <p className="text-sm text-gray-600 font-semibold uppercase mb-2">Total Productores</p>
-          <p className="text-3xl font-bold text-gray-900">{mockProducers.length}</p>
-        </div>
-        <div className="bg-white rounded-lg p-4 border border-gray-200">
-          <p className="text-sm text-gray-600 font-semibold uppercase mb-2">Verificados</p>
-          <p className="text-3xl font-bold text-green-600">{mockProducers.filter(p => p.verified).length}</p>
-        </div>
-        <div className="bg-white rounded-lg p-4 border border-gray-200">
-          <p className="text-sm text-gray-600 font-semibold uppercase mb-2">Lotes Totales</p>
-          <p className="text-3xl font-bold text-blue-600">{mockProducers.reduce((sum, p) => sum + p.activeLotsCount, 0)}</p>
-        </div>
-      </div>
+      <p className="text-xs text-gray-500">
+        <strong>E</strong> = café orgánico certificado. <strong>T1/T2/T3</strong> = café de transición.
+        Un productor puede aparecer con varios códigos: el código identifica la parcela, no la persona.
+      </p>
     </div>
   )
 }

@@ -1,0 +1,729 @@
+// ============================================================
+// CoffeeTrace - Modelo de datos ASOCAFE Taipiplaya
+// v2 - corregido con las respuestas del cliente
+// Pegar en https://dbdiagram.io/d
+// ============================================================
+
+Project coffeetrace {
+  database_type: 'PostgreSQL'
+  Note: '''
+    Cadena real:
+    persona/parcela -> entrega_acopio (guinda) -> lote -> envio (pergamino)
+      -> beneficio_seco -> almacen -> despacho -> exportacion
+
+    TRES DECISIONES QUE DEFINEN ESTE MODELO:
+
+    1. El codigo CFM-020 NO identifica a una persona. Se separan persona,
+       parcela, certificacion y codigo historico.
+
+    2. Hay solo DOS pesos medidos de verdad: la guinda en acopio y el
+       pergamino cargado al camion. Todo lo demas es equivalencia calculada
+       con factores fijos. El modelo lo distingue explicitamente.
+
+    3. Organico y transicion se manejan fisicamente separados. Un productor
+       de transicion NUNCA puede aportar a un lote organico: eso es un error
+       de captura y el modelo lo marca en vez de aceptarlo.
+  '''
+}
+
+// ------------------------------------------------------------
+// Enums
+// ------------------------------------------------------------
+
+Enum estatus_certificacion {
+  E  [note: 'Cafe organico certificado']
+  T1 [note: 'Cafe de transicion']
+  T2 [note: 'Cafe de transicion']
+  T3 [note: 'Cafe de transicion']
+}
+
+Enum tipo_certificacion {
+  organico   [note: 'Deriva de estatus E']
+  transicion [note: 'Deriva de estatus T1, T2 o T3']
+}
+
+Enum estado_revision {
+  ok         [note: 'Fila consistente']
+  observado  [note: 'Contradiccion detectada al cargar, requiere revision humana']
+  corregido  [note: 'Ya fue revisada y ajustada']
+}
+
+Enum estado_lote {
+  acopio
+  en_transito
+  recibido
+  trillado
+  seleccionado
+  almacenado
+  despachado
+  exportado
+}
+
+Enum tipo_producto {
+  guinda                [note: 'Cafe recien acopiado']
+  mote                  [note: 'Despues del lavado']
+  pergamino             [note: 'Seco. Es lo que viaja a La Paz']
+  verde_sin_seleccionar
+  verde_oro             [note: 'Producto final exportable']
+  caracol
+  descarte
+}
+
+Enum tipo_muestra {
+  muestra       [note: 'Se extrae para cateo / analisis de calidad']
+  contramuestra [note: 'Testigo que se conserva como evidencia']
+}
+
+Enum tipo_empaque {
+  yute
+  caja
+  bolsa
+  granel
+}
+
+Enum estado_afiliacion {
+  activo     [note: 'Socio entregando a la asociacion']
+  retirado   [note: 'Dejo de entregar. Hoy la causa habitual es la competencia privada']
+  suspendido
+}
+
+Enum rol_usuario {
+  admin
+  operador_acopio
+  transportista
+  recepcionista
+  encargado_maquinas
+  encargada_seleccion
+  comercializacion
+  visualizador
+}
+
+// ------------------------------------------------------------
+// Organizacion y catalogos
+// ------------------------------------------------------------
+
+Table organizacion {
+  id          smallint     [pk, default: 1]
+  nombre      varchar(120) [not null, default: 'ASOCAFE']
+  codigo_ico  varchar(20)  [note: '1-83-1. Codigo de exportador para documentacion']
+  nit         varchar(20)
+  direccion   varchar(200)
+
+  Note: 'Tabla de una sola fila. El codigo ICO es fijo para toda la asociacion.'
+}
+
+Table campanias {
+  id           smallint [pk, note: 'Anio de cosecha: 2024, 2025']
+  fecha_inicio date
+  fecha_fin    date
+  activa       boolean  [not null, default: false]
+
+  Note: '''
+    Los archivos mezclan gestiones: OR-07 aparece vacio en 2025 mientras
+    OR-07-24 pertenece a otra gestion. La campania es obligatoria en lotes
+    y entregas para poder separarlas.
+  '''
+}
+
+Table comunidades {
+  id             smallserial [pk]
+  nombre         varchar(80) [not null, unique]
+  prefijo_codigo varchar(8)  [note: 'CBH, CVVD, CCP...']
+  municipio      varchar(80)
+  latitud        decimal(9,6)
+  longitud       decimal(9,6)
+
+  Note: '''
+    16 comunidades. PENDIENTE: "Barrio Nuevo" usa prefijo CVI en la planilla
+    organica y CBN en la de transicion, y CVI ya es de "Villa Imperial".
+  '''
+}
+
+// ------------------------------------------------------------
+// Persona / Parcela / Certificacion / Codigo historico
+// Reemplaza a la tabla unica `productores`
+// ------------------------------------------------------------
+
+Table personas {
+  id        uuid         [pk, default: `gen_random_uuid()`]
+  nombre    varchar(120) [not null]
+  ci        varchar(20)  [unique, note: 'No esta en los Excel, se captura despues']
+  telefono  varchar(20)
+  activo    boolean      [not null, default: true]
+  creado_en timestamptz  [not null, default: `now()`]
+
+  Note: '''
+    La persona real. Existe un padron oficial de socios: esa es la fuente de
+    verdad para deduplicar, no las planillas.
+    Fructosa Mamani Chivi aparece hoy bajo 8 codigos distintos (CFM-018..025):
+    todos deben resolver a UNA sola fila aqui.
+  '''
+}
+
+Table afiliaciones {
+  id            uuid              [pk, default: `gen_random_uuid()`]
+  persona_id    uuid              [not null]
+  campania_id   smallint          [not null]
+  estado        estado_afiliacion [not null, default: 'activo']
+  fecha_alta    date
+  fecha_baja    date
+  motivo_baja   varchar(200)
+
+  indexes {
+    (persona_id, campania_id) [unique]
+    estado
+  }
+
+  Note: '''
+    Afiliacion por campania, no un simple booleano en `personas`.
+
+    Varios socios estan dejando de entregar a la asociacion por la competencia
+    de la empresa privada. Con esta tabla se puede responder cuantos socios
+    entregaron en 2024 frente a 2025, quienes dejaron de hacerlo y por que.
+    Un booleano `activo` perderia esa historia.
+
+    Para la trazabilidad importa el estado en el momento de la entrega: quien
+    era socio en 2025 lo sigue siendo para los lotes de 2025, aunque despues
+    se retire.
+  '''
+}
+
+Table parcelas {
+  id            uuid        [pk, default: `gen_random_uuid()`]
+  persona_id    uuid        [not null, note: 'Titular actual']
+  comunidad_id  smallint    [not null]
+  nombre        varchar(120)
+  hectareas     decimal(8,3)
+  altitud_msnm  integer
+  latitud       decimal(9,6)
+  longitud      decimal(9,6)
+  activa        boolean     [not null, default: true]
+
+  indexes {
+    persona_id
+    comunidad_id
+  }
+
+  Note: '''
+    La unidad que se certifica es la PARCELA, no la persona. Una persona
+    puede tener varias parcelas, y de ahi salen los multiples codigos.
+  '''
+}
+
+Table codigos_productor {
+  id           uuid        [pk, default: `gen_random_uuid()`]
+  codigo       varchar(16) [not null, note: 'CFM-020, CBH-022...']
+  parcela_id   uuid        [note: 'NULL mientras no se resuelva a que parcela pertenece']
+  persona_id   uuid        [note: 'Persona que figuraba con este codigo']
+  campania_id  smallint
+  vigente_desde date
+  vigente_hasta date
+  nombre_excel varchar(120) [note: 'Nombre tal cual aparecia en la planilla']
+
+  indexes {
+    codigo
+    parcela_id
+    (codigo, campania_id)
+  }
+
+  Note: '''
+    CODIGOS HISTORICOS. Deliberadamente SIN unique sobre `codigo`: los datos
+    reales tienen el mismo codigo con nombres distintos (CFM-020 figura con
+    3 nombres) y la misma persona con varios codigos. Esta tabla conserva el
+    dato crudo del Excel y sirve de puente hasta depurar el padron.
+  '''
+}
+
+Table certificaciones {
+  id            uuid        [pk, default: `gen_random_uuid()`]
+  parcela_id    uuid        [not null]
+  campania_id   smallint    [not null]
+  estatus       estatus_certificacion [not null]
+  tipo          tipo_certificacion    [not null, note: 'E->organico, T1/T2/T3->transicion']
+  certificadora varchar(80)
+  vigente_desde date
+  vigente_hasta date
+
+  indexes {
+    (parcela_id, campania_id) [unique]
+  }
+
+  Note: '''
+    El estatus es constante por productor dentro de una campania: se verifico
+    que ninguno de los 117 productores cambia de estatus entre entregas.
+    Por eso vive aqui y no en cada entrega.
+  '''
+}
+
+// ------------------------------------------------------------
+// Factores de conversion
+// ------------------------------------------------------------
+
+Table factores_conversion {
+  id            smallserial   [pk]
+  campania_id   smallint      [not null]
+  origen        tipo_producto [not null]
+  destino       tipo_producto [not null]
+  factor        decimal(8,5)  [not null]
+  es_estimado   boolean       [not null, default: true]
+  nota          text
+
+  indexes {
+    (campania_id, origen, destino) [unique]
+  }
+
+  Note: '''
+    Constantes en los 10 archivos, sin una sola excepcion:
+      guinda -> mote 0.313 | pergamino 0.20 | verde_sin_selec 0.18 | verde_oro 0.16
+      pergamino -> trillado 0.90 | verde_oro 0.80 | descarte 0.055 | caracol 0.045
+      1 lata = 14 kg de guinda    1 QQ = 46 kg
+
+    es_estimado = true porque HOY no se pesa el rendimiento fisico: todo se
+    estima. Cuando planta empiece a pesar de verdad, los pesos reales van en
+    las columnas *_real y estos factores quedan solo como referencia.
+  '''
+}
+
+// ------------------------------------------------------------
+// Fase 1: Acopio  (PESO REAL #1: la guinda)
+// ------------------------------------------------------------
+
+Table entregas_acopio {
+  id                 bigserial  [pk]
+  campania_id        smallint   [not null]
+  fecha              date       [not null]
+  codigo_productor_id uuid      [not null, note: 'Codigo tal cual se escribio']
+  parcela_id         uuid       [note: 'Resuelto tras depurar el padron']
+  persona_id         uuid       [note: 'Resuelto tras depurar el padron']
+  kg_guinda_real     decimal(10,2) [not null, note: 'MEDIDO en balanza. Columna KILOS']
+  latas              decimal(10,4) [note: 'GENERATED: kg_guinda_real / 14']
+  precio_unitario_bs decimal(8,2)  [not null, note: 'Por lata. Vario de 44 a 143 Bs en 2025']
+  total_pagado_bs    decimal(12,2) [note: 'GENERATED: latas * precio_unitario_bs']
+  estatus_declarado  estatus_certificacion [note: 'Estatus escrito en la planilla']
+  lote_id            uuid       [note: 'NULL hasta que se asigna a un lote']
+  revision           estado_revision [not null, default: 'ok']
+  revision_nota      text
+  observaciones      text
+  creado_en          timestamptz [not null, default: `now()`]
+
+  indexes {
+    (campania_id, fecha)
+    codigo_productor_id
+    parcela_id
+    lote_id
+    revision
+  }
+
+  Note: '''
+    1.352 entregas (881 organico + 471 transicion). Verificado en el 100%:
+      latas = kg / 14        total_pagado = latas * precio_unitario
+
+    revision = 'observado' marca las filas contradictorias en vez de
+    descartarlas. Al cargar quedan observadas:
+      - 8 entregas de CCP-132 (Benito Choque Ticona) con estatus T3 dentro de
+        la planilla organica. Confirmado por el cliente: es un error, cafe de
+        transicion NO puede convertirse en organico.
+      - 34 entregas de junio 2025 con el estatus vacio (PENDIENTE de aclarar).
+
+    ALCANCE DEL PAGO: precio_unitario_bs y total_pagado_bs se registran aqui
+    porque quien acopia anota cuanto se paga por lo que el productor trae, y
+    ese dato debe poder consultarse. Pero la contabilidad formal (liquidaciones,
+    anticipos, saldos, retenciones) la lleva el area de contabilidad en su
+    propio sistema: NO se modela aqui. Lo que este sistema entrega es el
+    acumulado pagado por productor y por campania.
+  '''
+}
+
+// ------------------------------------------------------------
+// Fase 2: Lotes
+// ------------------------------------------------------------
+
+Table lotes {
+  id             uuid        [pk, default: `gen_random_uuid()`]
+  codigo         varchar(20) [not null, note: 'Normalizado a OR-01-25 / TR-02-24']
+  campania_id    smallint    [not null]
+  certificacion  tipo_certificacion [not null]
+  correlativo    smallint    [not null]
+  estado         estado_lote [not null, default: 'acopio']
+  kg_guinda_total decimal(12,2) [note: 'Suma de kg_guinda_real de sus entregas']
+  fecha_apertura date
+  fecha_cierre   date
+  creado_en      timestamptz [not null, default: `now()`]
+
+  indexes {
+    (campania_id, certificacion, correlativo) [unique]
+    codigo [unique]
+    estado
+  }
+
+  Note: '''
+    Organico y transicion van SIEMPRE en lotes separados: se manejan con
+    separacion fisica y senalizacion en planta. Por eso `certificacion` vive
+    aqui y una entrega solo puede unirse a un lote de su mismo tipo.
+
+    Normalizar al cargar: conviven OR-01, OR-01-25, OR-3-25 y TR-02-24.
+    Los "LOTE 3/4/5/6/7" de las hojas de venta son estos mismos lotes escritos
+    de forma incompleta: hay que mapearlos, no crear lotes nuevos.
+  '''
+}
+
+// ------------------------------------------------------------
+// Fase 3: Envio Taipiplaya -> La Paz  (PESO REAL #2: el pergamino)
+// ------------------------------------------------------------
+
+Table envios {
+  id                   uuid        [pk, default: `gen_random_uuid()`]
+  lote_id              uuid        [not null]
+  fecha_salida         timestamptz [not null]
+  fecha_llegada        timestamptz
+  origen               varchar(60) [not null, default: 'Taipiplaya']
+  destino              varchar(60) [not null, default: 'La Paz']
+
+  kg_pergamino_despachado decimal(12,3) [note: 'MEDIDO al cargar el camion']
+  kg_pergamino_recibido   decimal(12,3) [note: 'MEDIDO al descargar en La Paz']
+  diferencia_kg           decimal(12,3) [note: 'GENERATED: despachado - recibido']
+
+  // Datos que hoy estan en papel
+  nota_remision varchar(40)
+  vehiculo      varchar(40)
+  conductor     varchar(120)
+  responsable   varchar(120)
+  observaciones text
+
+  indexes {
+    lote_id
+    fecha_salida
+  }
+
+  Note: '''
+    Lo que fisicamente viaja a La Paz es PERGAMINO seco. Las columnas de
+    guinda/mote/verde del Excel son equivalencias calculadas, no pesos: por eso
+    no se guardan aqui, se derivan en la vista `v_equivalencias_lote`.
+
+    despachado vs recibido permite registrar la diferencia real de transporte.
+    Hoy los Excel muestran diferencias de +1 a +58 kg entre la suma del lote y
+    el envio, sin explicacion registrada.
+
+    nota_remision, vehiculo y conductor estan en papel y aun no se entregan.
+  '''
+}
+
+// ------------------------------------------------------------
+// Fase 4: Limpieza de equipos  (sin datos historicos)
+// ------------------------------------------------------------
+
+Table limpiezas_equipo {
+  id            uuid        [pk, default: `gen_random_uuid()`]
+  equipo        varchar(80) [not null]
+  fecha_hora    timestamptz [not null]
+  tipo_limpieza varchar(20) [note: 'profunda (CIP) / rapida']
+  duracion_min  smallint
+  insumos       text
+  responsable   varchar(120)
+  lote_previo_id uuid       [note: 'Lote que se proceso antes']
+  lote_siguiente_id uuid    [note: 'Lote que se procesa despues']
+
+  Note: '''
+    SIN DATOS HISTORICOS: no existe ningun registro de limpieza en los Excel.
+    Se captura desde cero. Es obligatoria entre lotes de distinta certificacion
+    (organico vs transicion) para no contaminar la trazabilidad.
+  '''
+}
+
+// ------------------------------------------------------------
+// Fase 5: Beneficio seco en El Alto
+// ------------------------------------------------------------
+
+Table beneficio_seco {
+  id                  uuid        [pk, default: `gen_random_uuid()`]
+  lote_id             uuid        [not null]
+  fecha_inicio        timestamptz
+  fecha_fin           timestamptz
+
+  kg_pergamino_entrada decimal(12,3) [not null]
+
+  // Calculados hoy con factores; se llenan con peso real cuando planta pese
+  kg_trillado_calc    decimal(12,3)
+  kg_verde_calc       decimal(12,3)
+  kg_caracol_calc     decimal(12,3)
+  kg_descarte_calc    decimal(12,3)
+
+  kg_trillado_real    decimal(12,3) [note: 'NULL hasta que se pese en planta']
+  kg_verde_real       decimal(12,3)
+  kg_caracol_real     decimal(12,3)
+  kg_descarte_real    decimal(12,3)
+
+  rendimiento_pct     decimal(6,3) [note: 'GENERATED sobre los pesos reales si existen']
+  responsable         varchar(120)
+  observaciones       text
+
+  indexes {
+    lote_id
+  }
+
+  Note: '''
+    Las columnas _calc guardan la estimacion por factores (lo unico que existe
+    hoy). Las _real quedan vacias hasta que planta empiece a pesar. Comparar
+    ambas es lo que permitira medir el rendimiento verdadero, algo que el
+    Excel no puede mostrar porque se lo calcula a si mismo.
+  '''
+}
+
+Table beneficio_productor {
+  id                bigserial [pk]
+  beneficio_id      uuid      [not null]
+  parcela_id        uuid
+  persona_id        uuid
+  latas             decimal(10,4)
+  kg_guinda         decimal(12,3)
+  kg_pergamino_seco decimal(12,3)
+  kg_trillado       decimal(12,3)
+  kg_descarte       decimal(12,3)
+  kg_caracol        decimal(12,3)
+  kg_verde_export   decimal(12,3)
+
+  indexes {
+    beneficio_id
+    parcela_id
+  }
+
+  Note: '''
+    Desglose del lote por productor: es lo que hace posible el certificado de
+    origen. ~310 filas en SALDO DE ALMACENES y TRAZABILIDAD DE VENTA.
+  '''
+}
+
+// ------------------------------------------------------------
+// Fase 6: Almacen y muestras
+// ------------------------------------------------------------
+
+Table almacenes {
+  id           smallserial [pk]
+  nombre       varchar(80) [not null, note: 'Almacen El Alto']
+  ubicacion    varchar(120)
+  capacidad_kg decimal(12,2)
+}
+
+Table existencias {
+  id            bigserial     [pk]
+  almacen_id    smallint      [not null]
+  lote_id       uuid          [not null]
+  producto      tipo_producto [not null]
+  kg_ingreso    decimal(12,3) [not null]
+  kg_saldo      decimal(12,3) [not null]
+  fecha_ingreso date          [not null]
+  ubicacion     varchar(60)
+  temperatura   decimal(5,2)  [note: 'En papel, pendiente']
+  humedad       decimal(5,2)  [note: 'En papel, pendiente']
+  responsable   varchar(120)
+
+  indexes {
+    (almacen_id, lote_id, producto)
+  }
+}
+
+Table muestras {
+  id           uuid          [pk, default: `gen_random_uuid()`]
+  lote_id      uuid          [not null]
+  tipo         tipo_muestra  [not null]
+  kg           decimal(8,3)  [not null]
+  fecha        date          [not null]
+  motivo       varchar(120)  [note: 'Cateo, analisis de calidad, envio a comprador']
+  responsable  varchar(120)
+  ubicacion    varchar(80)   [note: 'Donde se guarda la contramuestra testigo']
+  muestra_id   uuid          [note: 'La contramuestra apunta a su muestra']
+
+  indexes {
+    lote_id
+    tipo
+  }
+
+  Note: '''
+    Las muestras NO son un lote nuevo ni una venta: son kilos que salen del
+    lote para control de calidad. Registrarlas como salida es lo que permite
+    explicar donde termino cada kilo.
+    Ejemplo real: LOTE 4 (2110,4) + LOTE 5 (292,16) + MUESTRA (2,56) = 2400 kg.
+    La contramuestra es el testigo que queda como evidencia.
+  '''
+}
+
+// ------------------------------------------------------------
+// Fase 7: Venta y exportacion
+// ------------------------------------------------------------
+
+Table clientes {
+  id      smallserial  [pk]
+  nombre  varchar(120) [not null, unique]
+  pais    varchar(60)
+  contacto varchar(120)
+  email   varchar(120)
+  activo  boolean      [not null, default: true]
+
+  Note: '''
+    ANDES COFFEE (Corea): compra generalmente organico.
+    Ann Katterine (Alemania): compra organico y transicion.
+    Un cliente NO esta restringido a un tipo: el tipo se define por lote.
+  '''
+}
+
+Table contratos {
+  id             uuid        [pk, default: `gen_random_uuid()`]
+  numero         varchar(40) [not null, unique]
+  cliente_id     smallint    [not null]
+  fecha          date        [not null]
+  certificacion  tipo_certificacion [note: 'Tipo de cafe contratado']
+  sacos          integer
+  kg_por_saco    decimal(8,2)
+  total_kg       decimal(12,2) [note: 'GENERATED: sacos * kg_por_saco']
+  tipo_empaque   tipo_empaque  [note: 'Se coordina con el comprador']
+  precio_por_kg  decimal(10,4)
+  moneda         varchar(3)    [default: 'USD']
+  incoterm       varchar(10)
+  puerto_destino varchar(80)
+
+  indexes {
+    cliente_id
+    fecha
+  }
+
+  Note: '''
+    El empaque (yute, caja, bolsa) lo define el comprador en cada contrato.
+
+    OJO: `contratos` NO lleva campania_id, y es deliberado. La fecha de venta
+    es independiente de la cosecha: hay un contrato del 2026-02-26 que vende
+    cafe de la campania 2025, y es correcto (se vende stock del anio anterior).
+    La campania de lo vendido se obtiene por los lotes, via despacho_lotes.
+    Si se agregara campania_id aqui, ese contrato quedaria mal clasificado.
+  '''
+}
+
+Table despachos {
+  id             uuid        [pk, default: `gen_random_uuid()`]
+  contrato_id    uuid
+  almacen_id     smallint
+  fecha_despacho date        [not null]
+  contenedor     varchar(20) [note: 'En papel, pendiente']
+  precintos      varchar(120)
+  kg_neto        decimal(12,2)
+  responsable    varchar(120)
+  observaciones  text
+
+  indexes {
+    contrato_id
+    fecha_despacho
+  }
+}
+
+Table despacho_lotes {
+  id           bigserial     [pk]
+  despacho_id  uuid          [not null]
+  lote_id      uuid          [not null]
+  kg_asignados decimal(12,3) [not null]
+
+  indexes {
+    (despacho_id, lote_id) [unique]
+  }
+
+  Note: '''
+    Un despacho puede combinar varios lotes, incluso de distinta certificacion
+    (EX_KOREA mezcla TR-02-24, OR-07-24, OR-01-25, OR-02-25 y TR-01-25 en
+    14.100 kg). Van fisicamente separados y senalizados dentro del embarque,
+    por eso la certificacion se lee por lote y nunca se promedia.
+  '''
+}
+
+Table exportaciones {
+  id              uuid   [pk, default: `gen_random_uuid()`]
+  despacho_id     uuid   [not null, unique]
+  fecha_embarque  date
+  puerto_salida   varchar(80)
+  puerto_llegada  varchar(80)
+  naviera         varchar(80)
+  bl_numero       varchar(40)
+  certificaciones text[]
+  volumen_kg      decimal(12,2)
+}
+
+// ------------------------------------------------------------
+// Blockchain
+// ------------------------------------------------------------
+
+Table blockchain_registros {
+  id            bigserial   [pk]
+  tabla_origen  varchar(40) [not null]
+  registro_id   varchar(64) [not null]
+  lote_id       uuid
+  hash_sha256   char(64)    [not null]
+  tx_id         varchar(80)
+  block_number  bigint
+  hash_anterior char(64)
+  sellado_en    timestamptz [not null, default: `now()`]
+  sellado_por   uuid
+
+  indexes {
+    (tabla_origen, registro_id) [unique]
+    lote_id
+    hash_sha256
+  }
+
+  Note: 'Solo INSERT. Sin UPDATE ni DELETE para nadie, ni siquiera admin.'
+}
+
+// ------------------------------------------------------------
+// Usuarios (Supabase Auth)
+// ------------------------------------------------------------
+
+Table perfiles {
+  id        uuid         [pk, note: 'FK a auth.users']
+  nombre    varchar(120) [not null]
+  rol       rol_usuario  [not null, default: 'visualizador']
+  planta    varchar(60)
+  activo    boolean      [not null, default: true]
+  creado_en timestamptz  [not null, default: `now()`]
+}
+
+// ------------------------------------------------------------
+// Relaciones
+// ------------------------------------------------------------
+
+Ref: afiliaciones.persona_id > personas.id
+Ref: afiliaciones.campania_id > campanias.id
+Ref: parcelas.persona_id > personas.id
+Ref: parcelas.comunidad_id > comunidades.id
+Ref: codigos_productor.parcela_id > parcelas.id
+Ref: codigos_productor.persona_id > personas.id
+Ref: codigos_productor.campania_id > campanias.id
+Ref: certificaciones.parcela_id > parcelas.id
+Ref: certificaciones.campania_id > campanias.id
+Ref: factores_conversion.campania_id > campanias.id
+
+Ref: entregas_acopio.campania_id > campanias.id
+Ref: entregas_acopio.codigo_productor_id > codigos_productor.id
+Ref: entregas_acopio.parcela_id > parcelas.id
+Ref: entregas_acopio.persona_id > personas.id
+Ref: entregas_acopio.lote_id > lotes.id
+
+Ref: lotes.campania_id > campanias.id
+Ref: envios.lote_id > lotes.id
+Ref: limpiezas_equipo.lote_previo_id > lotes.id
+Ref: limpiezas_equipo.lote_siguiente_id > lotes.id
+
+Ref: beneficio_seco.lote_id > lotes.id
+Ref: beneficio_productor.beneficio_id > beneficio_seco.id
+Ref: beneficio_productor.parcela_id > parcelas.id
+Ref: beneficio_productor.persona_id > personas.id
+
+Ref: existencias.almacen_id > almacenes.id
+Ref: existencias.lote_id > lotes.id
+Ref: muestras.lote_id > lotes.id
+Ref: muestras.muestra_id > muestras.id
+
+Ref: contratos.cliente_id > clientes.id
+Ref: despachos.contrato_id > contratos.id
+Ref: despachos.almacen_id > almacenes.id
+Ref: despacho_lotes.despacho_id > despachos.id
+Ref: despacho_lotes.lote_id > lotes.id
+Ref: exportaciones.despacho_id - despachos.id
+
+Ref: blockchain_registros.lote_id > lotes.id
+Ref: blockchain_registros.sellado_por > perfiles.id

@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 
+import { uno } from './db.js'
 import lotRoutes from './routes/lots.js'
 import producerRoutes from './routes/producers.js'
 import blockchainRoutes from './routes/blockchain.js'
@@ -31,20 +32,28 @@ app.use('/api/producers', producerRoutes)
 app.use('/api/blockchain', blockchainRoutes)
 app.use('/api/analytics', analyticsRoutes)
 
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'online',
-    timestamp: new Date().toISOString(),
-    blockchain: {
-      isOnline: true,
-      nodesSync: 12,
-      totalNodes: 12,
-    },
-  })
+app.get('/api/health', async (req, res) => {
+  const salida = { status: 'online', timestamp: new Date().toISOString() }
+  try {
+    const r = await uno(`select count(*)::int entregas from entregas_acopio`)
+    salida.base = { conectada: true, entregas: r.entregas }
+  } catch (e) {
+    salida.status = 'degraded'
+    salida.base = { conectada: false, error: e.message }
+  }
+  // Fabric aun no esta desplegado. No se reporta una red que no existe.
+  salida.blockchain = { redDesplegada: false }
+  res.status(salida.status === 'online' ? 200 : 503).json(salida)
 })
 
 app.use((req, res) => {
   res.status(404).json({ success: false, error: `Ruta no encontrada: ${req.path}` })
+})
+
+// Los handlers async pasan sus errores aqui via asyncHandler.
+app.use((err, req, res, next) => {
+  console.error(`[${req.method} ${req.path}]`, err.message)
+  res.status(500).json({ success: false, error: err.message })
 })
 
 export default app
