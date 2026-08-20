@@ -22,8 +22,16 @@ function leerEnv() {
 const env = { ...leerEnv(), ...process.env }
 const connectionString = env.SUPABASE_DB_URL || env.DATABASE_URL
 
+/** En Vercel no hay archivo .env: las variables vienen del entorno. */
+const enServerless = Boolean(env.VERCEL || env.AWS_LAMBDA_FUNCTION_NAME)
+
 if (!connectionString) {
-  console.error('Falta SUPABASE_DB_URL en el .env. El API no puede leer datos reales.')
+  console.error(
+    enServerless
+      ? 'Falta SUPABASE_DB_URL. Configurala en Vercel > Settings > Environment Variables ' +
+        'y vuelve a desplegar. Usa la cadena del POOLER (puerto 6543), no la directa.'
+      : 'Falta SUPABASE_DB_URL en el .env. El API no puede leer datos reales.'
+  )
 }
 
 // Postgres devuelve numeric como string para no perder precision. En este
@@ -32,9 +40,26 @@ if (!connectionString) {
 pg.types.setTypeParser(1700, (v) => (v === null ? null : parseFloat(v)))
 pg.types.setTypeParser(20, (v) => (v === null ? null : parseInt(v, 10)))
 
+/**
+ * En serverless cada instancia de la funcion abre su propio pool, y Vercel
+ * puede levantar decenas a la vez. Con max: 5 por instancia se agotan las
+ * conexiones de Supabase enseguida, asi que ahi se usa una sola por instancia
+ * y se deja que el pooler de Supabase haga el multiplexado.
+ */
+const poolMax = Number(env.PG_POOL_MAX ?? (enServerless ? 3 : 10))
+
 export const pool = connectionString
-  ? new pg.Pool({ connectionString, ssl: { rejectUnauthorized: false }, max: 5 })
+  ? new pg.Pool({
+      connectionString,
+      ssl: { rejectUnauthorized: false },
+      max: poolMax,
+      idleTimeoutMillis: enServerless ? 10_000 : 30_000,
+      connectionTimeoutMillis: 10_000,
+    })
   : null
+
+// Sin esto, un error de red en una conexion inactiva tumba el proceso entero.
+pool?.on('error', (e) => console.error('Error en el pool de Postgres:', e.message))
 
 export async function q(sql, params = []) {
   if (!pool) throw new Error('Sin conexion a la base: falta SUPABASE_DB_URL')
