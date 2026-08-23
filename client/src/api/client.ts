@@ -135,6 +135,37 @@ export interface EstadoBlockchain {
   ultimoSello: string | null
 }
 
+export interface IndicadorFila {
+  campania_id: number
+  certificacion?: Certificacion
+  lotes: number
+  lotes_estimados: number
+  /** Verde oro producido de la cosecha */
+  vop: number
+  /** Verde oro exportado con documentacion de embarque verificable */
+  voe: number
+  /** Saldo inmovilizado en almacen */
+  vos: number
+  /** Producto sin destino documentado: vop - voe - vos */
+  vond: number
+  /** Tasa de Eficiencia Exportadora */
+  tee: number | null
+  /** Tasa de Inmovilizacion de Inventario */
+  tin: number | null
+  /** Tasa de producto sin destino documentado */
+  tnd: number | null
+  inconsistente?: boolean
+}
+
+export interface Indicadores {
+  campania: number
+  total: IndicadorFila | null
+  porCertificacion: IndicadorFila[]
+  serie: IndicadorFila[]
+  /** true = ningun lote tiene el verde oro pesado; todo sale de factores */
+  baseEstimada: boolean | null
+}
+
 export interface Reconciliacion {
   codigo: string; certificacion: Certificacion
   kg_acopio: number; kg_beneficio: number; diferencia: number; estado: string
@@ -186,6 +217,7 @@ export const api = {
   }[]>('/producers/comunidades'),
 
   dashboard: (campania = 2025) => pedir<Dashboard>(`/analytics/dashboard?campania=${campania}`),
+  indicadores: (campania = 2025) => pedir<Indicadores>(`/analytics/indicadores?campania=${campania}`),
   rendimiento: () => pedir<Rendimiento[]>('/analytics/rendimiento'),
   reconciliacion: () => pedir<Reconciliacion[]>('/analytics/reconciliacion'),
   inconsistencias: (limit = 100) => pedir<Inconsistencia[]>(`/analytics/inconsistencias?limit=${limit}`),

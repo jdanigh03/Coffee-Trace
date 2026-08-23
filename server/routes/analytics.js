@@ -36,6 +36,32 @@ router.get('/dashboard', asyncHandler(async (req, res) => {
   })
 }))
 
+/**
+ * GET /api/analytics/indicadores
+ * TEE, TIN y TND por campania, con el desglose organico / transicion.
+ */
+router.get('/indicadores', asyncHandler(async (req, res) => {
+  const campania = Number(req.query.campania ?? 2025)
+  const [total, porCert, serie] = await Promise.all([
+    uno(`select * from v_indicadores_campania where campania_id = $1`, [campania]),
+    q(`select * from v_indicadores_exportacion where campania_id = $1
+        order by certificacion`, [campania]),
+    q(`select * from v_indicadores_campania order by campania_id`),
+  ])
+  res.json({
+    success: true,
+    data: {
+      campania,
+      total,
+      porCertificacion: porCert,
+      serie,
+      // Si todos los lotes son estimados, el indicador se calculo sobre
+      // factores fijos y no sobre pesos medidos. La UI debe decirlo.
+      baseEstimada: total ? total.lotes_estimados === total.lotes : null,
+    },
+  })
+}))
+
 /** GET /api/analytics/rendimiento  -> estimado vs medido */
 router.get('/rendimiento', asyncHandler(async (req, res) => {
   const filas = await q(`select * from v_rendimiento_real_vs_estimado order by codigo`)

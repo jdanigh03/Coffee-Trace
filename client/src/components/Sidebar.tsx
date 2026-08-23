@@ -11,7 +11,7 @@ import {
   Search,
 } from 'lucide-react'
 import { useAppStore } from '../store'
-import { PHASES } from '../constants/phases'
+import { fasesConEtapas } from '../constants/phases'
 
 export default function Sidebar() {
   const location = useLocation()
@@ -33,10 +33,15 @@ export default function Sidebar() {
     { label: 'Verificacion Blockchain', path: '/verificacion', icon: Shield },
   ]
 
-  // Despacho y Exportacion comparten pantalla, se muestran una sola vez.
-  const cadena = PHASES.filter(
-    (p, idx, arr) => arr.findIndex((o) => o.path === p.path) === idx
-  )
+  // Agrupado por fase segun el documento de cadena de suministro.
+  // Dentro de cada fase se descartan las etapas que comparten pantalla, para
+  // no repetir el mismo enlace dos veces.
+  const cadena = fasesConEtapas().map((f) => ({
+    ...f,
+    etapas: f.etapas.filter(
+      (p, i, arr) => arr.findIndex((o) => o.path === p.path) === i
+    ),
+  }))
 
   return (
     <>
@@ -93,40 +98,72 @@ export default function Sidebar() {
               </ul>
             </div>
 
-            {/* La cadena va numerada en el orden real del workflow */}
+            {/* Cadena agrupada en las tres fases del documento */}
             <div>
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-3">
                 Cadena de Trazabilidad
               </p>
-              <ul className="space-y-1">
-                {cadena.map((step) => {
-                  const active = isActive(step.path)
-                  return (
-                    <li key={step.path}>
-                      <Link
-                        to={step.path}
-                        onClick={() => window.innerWidth < 768 && toggleSidebar()}
-                        title={step.actor}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-lg transition ${
-                          active
-                            ? 'bg-sky-200 text-sky-900 font-medium'
-                            : 'text-gray-700 hover:bg-sky-100'
-                        }`}
-                      >
-                        <span
-                          className={`w-6 h-6 flex-shrink-0 rounded-full flex items-center justify-center text-xs font-semibold ${
-                            active ? 'bg-coffee-700 text-white' : 'bg-white text-gray-500'
-                          }`}
-                        >
-                          {step.order}
-                        </span>
-                        <span className="flex-1 text-sm">{step.label}</span>
-                        {active && <ChevronRight size={16} />}
-                      </Link>
-                    </li>
-                  )
-                })}
-              </ul>
+
+              {cadena.map((fase) => (
+                <div key={fase.id} className="mb-4">
+                  <div className="px-3 mb-2">
+                    <p className="text-[11px] font-bold text-coffee-800 tracking-wide">
+                      {fase.label}
+                    </p>
+                    <p className="text-[10px] text-gray-500 leading-tight">
+                      {fase.subtitulo} · {fase.plant}
+                    </p>
+                  </div>
+                  <ul className="space-y-1">
+                    {fase.etapas.map((step) => {
+                      const active = isActive(step.path)
+                      return (
+                        <li key={`${fase.id}-${step.path}`}>
+                          <Link
+                            to={step.path}
+                            onClick={() => window.innerWidth < 768 && toggleSidebar()}
+                            title={
+                              step.pendiente
+                                ? `${step.actor} - etapa aun sin registro en el sistema`
+                                : step.actor
+                            }
+                            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition ${
+                              active
+                                ? 'bg-sky-200 text-sky-900 font-medium'
+                                : step.pendiente
+                                  ? 'text-gray-400 hover:bg-sky-100'
+                                  : 'text-gray-700 hover:bg-sky-100'
+                            }`}
+                          >
+                            <span
+                              className={`w-6 h-6 flex-shrink-0 rounded-full flex items-center justify-center text-xs font-semibold ${
+                                active
+                                  ? 'bg-coffee-700 text-white'
+                                  : step.pendiente
+                                    ? 'bg-white text-gray-300 border border-dashed border-gray-300'
+                                    : 'bg-white text-gray-500'
+                              }`}
+                            >
+                              {step.ordenEnFase}
+                            </span>
+                            <span className="flex-1 text-sm">{step.label}</span>
+                            {/* Las etapas del documento marcadas "se debe
+                                agregar" todavia no tienen datos: se muestran
+                                atenuadas en vez de ocultarse, para que se vea
+                                lo que falta de la cadena. */}
+                            {step.pendiente && !active && (
+                              <span className="text-[9px] uppercase text-gray-400 tracking-wide">
+                                pend
+                              </span>
+                            )}
+                            {active && <ChevronRight size={16} />}
+                          </Link>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
+              ))}
             </div>
 
             <div>

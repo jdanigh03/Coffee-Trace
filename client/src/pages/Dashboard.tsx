@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Package, Users, Scale, AlertTriangle, ArrowRight } from 'lucide-react'
 import { api } from '../api/client'
 import { useApi, fmtBs, fmtKg } from '../api/useApi'
+import Indicadores from '../components/Indicadores'
 
 const CAMPANIA = 2025
 
@@ -30,6 +31,7 @@ function Tarjeta({ icono, titulo, valor, pie, tono = 'coffee' }: {
 
 export default function Dashboard() {
   const { datos, cargando, error } = useApi(() => api.dashboard(CAMPANIA), [])
+  const { datos: indicadores } = useApi(() => api.indicadores(CAMPANIA), [])
 
   if (cargando) {
     return <div className="p-8 text-gray-500">Cargando datos de la campaña {CAMPANIA}...</div>
@@ -57,6 +59,9 @@ export default function Dashboard() {
         <h1 className="text-2xl font-bold text-gray-900">Campaña {datos.campania}</h1>
         <p className="text-gray-600">Trazabilidad de café · ASOCAFE Taipiplaya</p>
       </div>
+
+      {/* Los indicadores van primero: son la variable dependiente del proyecto. */}
+      {indicadores && <Indicadores datos={indicadores} />}
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Tarjeta icono={<Scale size={20} />} titulo="Café guinda acopiado"

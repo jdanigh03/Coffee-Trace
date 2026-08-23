@@ -11,19 +11,28 @@ import { uno } from './db.js'
 function describirCadena(valor) {
   if (!valor) return 'ausente'
   const limpio = valor.trim()
-  if (limpio !== valor) return 'presente pero con espacios al inicio o al final'
   try {
     const u = new URL(limpio)
     return {
       host: u.hostname,
       puerto: u.port,
       usuario: u.username,
+      longitud: valor.length,
+      espaciosAlBorde: limpio !== valor,
       modo: u.port === '6543' ? 'transaction pooler (correcto para serverless)'
           : u.hostname.startsWith('db.') ? 'conexion directa (NO funciona en Vercel: solo IPv6)'
           : 'otro',
     }
   } catch {
-    return 'presente pero no es una URL valida'
+    // La longitud delata un valor truncado o pegado a medias sin revelarlo:
+    // una cadena de pooler completa ronda los 105-110 caracteres.
+    return {
+      problema: 'presente pero no es una URL valida',
+      longitud: valor.length,
+      empiezaPorPostgres: /^postgres(ql)?:\/\//.test(limpio),
+      tieneSaltosDeLinea: /[\r\n]/.test(valor),
+      espaciosAlBorde: limpio !== valor,
+    }
   }
 }
 import lotRoutes from './routes/lots.js'

@@ -1,6 +1,16 @@
 export enum ProcessPhase {
+  // Fase I - campo
   PRODUCTOR = 'productor',
+  // Fase II - beneficio humedo (Taipiplaya)
   ACOPIO = 'acopio',
+  TOLVA = 'tolva',
+  DESPULPADO = 'despulpado',
+  FERMENTACION = 'fermentacion',
+  LAVADO = 'lavado',
+  SECADO = 'secado',
+  ALMACEN_TEMP = 'almacen_temporal',
+  DESPACHO_ALTO = 'despacho_alto',
+  // Fase III - beneficio seco (El Alto)
   TRANSPORTE = 'transporte',
   RECEPCION = 'recepcion',
   LIMPIEZA = 'limpieza',
