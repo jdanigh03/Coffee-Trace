@@ -166,6 +166,52 @@ export interface Indicadores {
   baseEstimada: boolean | null
 }
 
+export type Severidad = 'critica' | 'alta' | 'media' | 'info'
+
+export interface Alerta {
+  tipo: string
+  severidad: Severidad
+  titulo: string
+  cantidad: number
+  detalle: string
+  ruta: string
+}
+
+export interface Notificaciones {
+  alertas: Alerta[]
+  /** Numero de ALERTAS, no de registros afectados */
+  total: number
+  porSeveridad: Partial<Record<Severidad, number>>
+  requiereAtencion: boolean
+}
+
+export interface Parametro {
+  clave: string
+  valor: string
+  tipo: 'texto' | 'numero' | 'booleano'
+  grupo: string
+  descripcion: string | null
+  unidad: string | null
+  min_valor: number | null
+  max_valor: number | null
+  actualizado_en: string
+}
+
+export interface Configuracion {
+  organizacion: {
+    id: number; nombre: string; codigo_ico: string | null
+    nit: string | null; direccion: string | null
+  } | null
+  parametros: Parametro[]
+  campanias: { id: number; fecha_inicio: string | null; fecha_fin: string | null
+               activa: boolean; entregas: number }[]
+  factores: { campania_id: number; origen: string; destino: string
+              factor: number; es_estimado: boolean; nota: string | null }[]
+  almacenes: { id: number; nombre: string; ubicacion: string | null; capacidad_kg: number | null }[]
+  clientes: { id: number; nombre: string; pais: string | null; activo: boolean }[]
+  sistema: { entorno: string; nodeVersion: string; redFabricDesplegada: boolean }
+}
+
 export interface Reconciliacion {
   codigo: string; certificacion: Certificacion
   kg_acopio: number; kg_beneficio: number; diferencia: number; estado: string
@@ -221,6 +267,19 @@ export const api = {
   rendimiento: () => pedir<Rendimiento[]>('/analytics/rendimiento'),
   reconciliacion: () => pedir<Reconciliacion[]>('/analytics/reconciliacion'),
   inconsistencias: (limit = 100) => pedir<Inconsistencia[]>(`/analytics/inconsistencias?limit=${limit}`),
+
+  notificaciones: () => pedir<Notificaciones>('/notificaciones'),
+
+  configuracion: () => pedir<Configuracion>('/configuracion'),
+  guardarParametro: (clave: string, valor: string) =>
+    pedir<Parametro>(`/configuracion/parametros/${encodeURIComponent(clave)}`,
+      { method: 'PATCH', body: JSON.stringify({ valor }) }),
+  guardarOrganizacion: (datos: Record<string, string>) =>
+    pedir<Configuracion['organizacion']>('/configuracion/organizacion',
+      { method: 'PATCH', body: JSON.stringify(datos) }),
+  activarCampania: (campania: number) =>
+    pedir<{ id: number; activa: boolean }[]>('/configuracion/campania-activa',
+      { method: 'PATCH', body: JSON.stringify({ campania }) }),
 
   estadoBlockchain: () => pedir<EstadoBlockchain>('/blockchain/status'),
   cadenaDeLote: (codigo: string) =>

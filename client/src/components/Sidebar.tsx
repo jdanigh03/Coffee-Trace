@@ -198,10 +198,18 @@ export default function Sidebar() {
         </div>
 
         <div className="p-4 border-t border-sky-200 bg-sky-50">
-          <button className="w-full flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-sky-100 rounded-lg transition">
+          <Link
+            to="/configuracion"
+            onClick={() => window.innerWidth < 768 && toggleSidebar()}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition ${
+              isActive('/configuracion')
+                ? 'bg-sky-200 text-sky-900 font-medium'
+                : 'text-gray-700 hover:bg-sky-100'
+            }`}
+          >
             <Settings size={18} />
-            <span className="flex-1 text-sm text-left">Ajustes</span>
-          </button>
+            <span className="flex-1 text-sm text-left">Configuracion</span>
+          </Link>
           <button className="w-full flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-sky-100 rounded-lg transition">
             <LogOut size={18} />
             <span className="flex-1 text-sm text-left">Cerrar Sesion</span>

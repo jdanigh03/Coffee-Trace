@@ -21,6 +21,7 @@ import Exportacion from './pages/Procesos/Exportacion'
 import Reportes from './pages/Reportes'
 import Consultas from './pages/Consultas'
 import Verificacion from './pages/Verificacion'
+import Configuracion from './pages/Configuracion'
 
 function AppLayout() {
   return (
@@ -45,6 +46,7 @@ function AppLayout() {
             <Route path="/reportes" element={<Reportes />} />
             <Route path="/consultas" element={<Consultas />} />
             <Route path="/verificacion" element={<Verificacion />} />
+            <Route path="/configuracion" element={<Configuracion />} />
           </Routes>
         </main>
       </div>

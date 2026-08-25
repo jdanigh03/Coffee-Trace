@@ -1,8 +1,21 @@
+import { useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { useAppStore } from '../store'
 import { Search, Settings, LogOut, Bell, Menu } from 'lucide-react'
+import { api } from '../api/client'
+import { useApi } from '../api/useApi'
+import PanelNotificaciones from './PanelNotificaciones'
 
 export default function Header() {
-  const { user, toggleSidebar, blockchainStatus } = useAppStore()
+  const { user, toggleSidebar } = useAppStore()
+  const location = useLocation()
+  const [abierto, setAbierto] = useState(false)
+
+  // Estado real de la cadena y de las alertas, no del store sin poblar.
+  const { datos: cadena } = useApi(() => api.estadoBlockchain(), [])
+  const { datos: notis } = useApi(() => api.notificaciones(), [location.pathname])
+
+  const criticas = (notis?.porSeveridad.critica ?? 0) + (notis?.porSeveridad.alta ?? 0)
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
@@ -25,24 +38,46 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2">
+          <div className="hidden lg:flex items-center gap-2">
             <div className={`w-2 h-2 rounded-full ${
-              blockchainStatus.redDesplegada ? 'bg-green-500' : 'bg-amber-500'}`} />
+              cadena?.redDesplegada ? 'bg-green-500' : 'bg-amber-500'}`} />
             <span className="text-sm text-gray-600">
-              {blockchainStatus.redDesplegada
-                ? `Blockchain: ${blockchainStatus.sellos} sellos`
-                : `Sin red Fabric · ${blockchainStatus.cola.pendiente} en cola`}
+              {cadena?.redDesplegada
+                ? `Blockchain: ${cadena.sellos} sellos`
+                : `Sin red Fabric · ${cadena?.cola.pendiente ?? 0} en cola`}
             </span>
           </div>
 
-          <button className="p-2 hover:bg-gray-100 rounded-lg relative">
-            <Bell size={20} />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setAbierto((v) => !v)}
+              aria-label={`Alertas${notis ? `: ${notis.total}` : ''}`}
+              className={`p-2 rounded-lg relative transition ${
+                abierto ? 'bg-gray-100' : 'hover:bg-gray-100'}`}
+            >
+              <Bell size={20} />
+              {/* El punto solo aparece si hay alertas de verdad. */}
+              {notis && notis.total > 0 && (
+                <span className={`absolute -top-0.5 -right-0.5 min-w-[1.15rem] h-[1.15rem] px-1
+                                  flex items-center justify-center rounded-full text-[10px]
+                                  font-bold text-white ${
+                                    criticas > 0 ? 'bg-red-500' : 'bg-sky-500'}`}>
+                  {notis.total}
+                </span>
+              )}
+            </button>
+            {abierto && <PanelNotificaciones onCerrar={() => setAbierto(false)} />}
+          </div>
 
-          <button className="p-2 hover:bg-gray-100 rounded-lg">
+          <Link
+            to="/configuracion"
+            aria-label="Configuracion"
+            className={`p-2 rounded-lg transition ${
+              location.pathname.startsWith('/configuracion')
+                ? 'bg-sky-100 text-sky-800' : 'hover:bg-gray-100'}`}
+          >
             <Settings size={20} />
-          </button>
+          </Link>
 
           <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
             <img
