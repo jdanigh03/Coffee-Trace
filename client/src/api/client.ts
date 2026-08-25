@@ -101,6 +101,54 @@ export interface Entrega {
   revision_nota: string | null
 }
 
+export interface EntregaLista extends Entrega {
+  productor: string | null
+  persona_id: string | null
+  lote: string | null
+}
+
+export interface Envio {
+  id: string
+  lote: string
+  certificacion: Certificacion
+  campania_id: number
+  fecha_salida: string
+  fecha_llegada: string | null
+  kg_pergamino_despachado: number | null
+  kg_pergamino_recibido: number | null
+  diferencia_kg: number | null
+  nota_remision: string | null
+  vehiculo: string | null
+  conductor: string | null
+  responsable: string | null
+  kg_guinda_real: number | null
+  entregas: number | null
+}
+
+export interface Despacho {
+  id: string
+  fecha_despacho: string
+  contenedor: string | null
+  precintos: string | null
+  kg_neto: number | null
+  responsable: string | null
+  contrato: string | null
+  certificacion: Certificacion | null
+  sacos: number | null
+  kg_por_saco: number | null
+  total_kg: number | null
+  tipo_empaque: string | null
+  incoterm: string | null
+  puerto_destino: string | null
+  cliente: string | null
+  pais: string | null
+  fecha_embarque: string | null
+  bl_numero: string | null
+  naviera: string | null
+  lotes: number
+  codigos_lote: string | null
+}
+
 export interface Productor {
   id: string
   nombre: string
@@ -113,6 +161,28 @@ export interface Productor {
   kg_guinda: number
   entregas: number
   total_pagado_bs: number
+}
+
+export interface ProductorDetalle {
+  id: string
+  nombre: string
+  ci: string | null
+  telefono: string | null
+  activo: boolean
+  parcelas: {
+    id: string; comunidad: string; hectareas: number | null
+    estatus: string | null; tipo: string | null; campania_id: number | null
+    codigos: string | null
+  }[]
+  entregas: {
+    fecha: string; lote: string | null; kg_guinda_real: number; latas: number
+    precio_unitario_bs: number; total_pagado_bs: number
+    estatus_declarado: string | null; revision: Revision
+  }[]
+  pagos: {
+    campania_id: number; entregas: number; kg_guinda: number; latas: number
+    precio_promedio_bs: number; total_pagado_bs: number
+  }[]
 }
 
 export interface Dashboard {
@@ -245,6 +315,16 @@ export const api = {
     )
     return pedir<LoteResumen[]>(`/lots${p.toString() ? `?${p}` : ''}`)
   },
+  entregas: (f: { campania?: number; revision?: string; comunidad?: string
+                  buscar?: string; limit?: number } = {}) => {
+    const p = new URLSearchParams(
+      Object.entries(f).filter(([, v]) => v != null && v !== '').map(([k, v]) => [k, String(v)])
+    )
+    return pedir<EntregaLista[]>(`/lots/entregas${p.toString() ? `?${p}` : ''}`)
+  },
+  envios: () => pedir<Envio[]>('/lots/envios'),
+  despachos: () => pedir<Despacho[]>('/lots/despachos'),
+
   lote: (codigo: string) => pedir<LoteDetalle>(`/lots/${encodeURIComponent(codigo)}`),
   entregasDeLote: (codigo: string) =>
     pedir<Entrega[]>(`/lots/${encodeURIComponent(codigo)}/entregas`),
@@ -257,6 +337,7 @@ export const api = {
     )
     return pedir<Productor[]>(`/producers${p.toString() ? `?${p}` : ''}`)
   },
+  productor: (id: string) => pedir<ProductorDetalle>(`/producers/${id}`),
   comunidades: () => pedir<{
     id: number; nombre: string; prefijo_codigo: string
     parcelas: number; productores: number; kg_guinda: number

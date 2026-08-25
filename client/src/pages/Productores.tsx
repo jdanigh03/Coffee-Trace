@@ -1,11 +1,16 @@
 import { useState } from 'react'
-import { Search, AlertTriangle } from 'lucide-react'
+import { Search, AlertTriangle, Eye, Download } from 'lucide-react'
 import { api } from '../api/client'
 import { useApi, fmtBs, fmtKg } from '../api/useApi'
+import AccionesFila, { descargarCsv } from '../components/AccionesFila'
+import DetalleProductor from '../components/DetalleProductor'
+import DetalleLote from '../components/DetalleLote'
 
 export default function Productores() {
   const [buscar, setBuscar] = useState('')
   const [comunidad, setComunidad] = useState('')
+  const [productorAbierto, setProductorAbierto] = useState<string | null>(null)
+  const [loteAbierto, setLoteAbierto] = useState<string | null>(null)
 
   const { datos: comunidades } = useApi(() => api.comunidades(), [])
   const { datos, cargando, error } = useApi(
@@ -55,7 +60,16 @@ export default function Productores() {
           <h2 className="font-semibold text-gray-900">
             {cargando ? 'Cargando...' : `${datos?.length ?? 0} productores`}
           </h2>
-          <p className="text-xs text-gray-500">Ordenados por kg aportados</p>
+          <div className="flex items-center gap-4">
+            <p className="text-xs text-gray-500">Ordenados por kg aportados</p>
+            <button
+              onClick={() => datos && descargarCsv('productores', datos)}
+              disabled={!datos?.length}
+              className="flex items-center gap-1.5 text-sm text-sky-700 hover:underline
+                         disabled:text-gray-300 disabled:no-underline">
+              <Download size={15} /> Exportar CSV
+            </button>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -69,12 +83,18 @@ export default function Productores() {
                 <th className="px-5 py-2 font-semibold text-right">Entregas</th>
                 <th className="px-5 py-2 font-semibold text-right">Guinda (kg)</th>
                 <th className="px-5 py-2 font-semibold text-right">Pagado (Bs)</th>
+                <th className="px-5 py-2 font-semibold text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {datos?.map((p) => (
                 <tr key={p.id} className="hover:bg-gray-50">
-                  <td className="px-5 py-2 font-medium text-gray-900">{p.nombre}</td>
+                  <td className="px-5 py-2 font-medium">
+                    <button onClick={() => setProductorAbierto(p.id)}
+                      className="text-sky-700 hover:underline text-left">
+                      {p.nombre}
+                    </button>
+                  </td>
                   <td className="px-5 py-2 text-gray-600">{p.comunidades ?? '--'}</td>
                   <td className="px-5 py-2 font-mono text-xs text-gray-600">
                     {p.codigos ?? '--'}
@@ -98,10 +118,16 @@ export default function Productores() {
                   <td className="px-5 py-2 text-right">{p.entregas}</td>
                   <td className="px-5 py-2 text-right">{fmtKg(p.kg_guinda)}</td>
                   <td className="px-5 py-2 text-right">{fmtBs(p.total_pagado_bs)}</td>
+                  <td className="px-5 py-2">
+                    <AccionesFila acciones={[
+                      { label: 'Ver detalle', icono: <Eye size={15} />,
+                        onClick: () => setProductorAbierto(p.id) },
+                    ]} />
+                  </td>
                 </tr>
               ))}
               {!cargando && datos?.length === 0 && (
-                <tr><td colSpan={8} className="px-5 py-8 text-center text-gray-500">
+                <tr><td colSpan={9} className="px-5 py-8 text-center text-gray-500">
                   Sin resultados
                 </td></tr>
               )}
@@ -114,6 +140,13 @@ export default function Productores() {
         <strong>E</strong> = café orgánico certificado. <strong>T1/T2/T3</strong> = café de transición.
         Un productor puede aparecer con varios códigos: el código identifica la parcela, no la persona.
       </p>
+
+      <DetalleProductor
+        id={productorAbierto}
+        onCerrar={() => setProductorAbierto(null)}
+        onVerLote={(codigo) => { setProductorAbierto(null); setLoteAbierto(codigo) }}
+      />
+      <DetalleLote codigo={loteAbierto} onCerrar={() => setLoteAbierto(null)} />
     </div>
   )
 }

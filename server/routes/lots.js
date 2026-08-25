@@ -21,6 +21,72 @@ router.get('/', asyncHandler(async (req, res) => {
   res.json({ success: true, data: filas })
 }))
 
+/**
+ * GET /api/lots/entregas  -> todas las entregas, con filtros.
+ * Va antes de /:codigo para que "entregas" no se lea como un codigo de lote.
+ */
+router.get('/entregas', asyncHandler(async (req, res) => {
+  const { campania = 2025, revision, comunidad, buscar } = req.query
+  const limite = Math.min(Number(req.query.limit ?? 200), 2000)
+
+  const filas = await q(`
+    select e.id, e.fecha, cp.codigo as codigo_productor, cp.nombre_excel,
+           p.nombre as productor, p.id as persona_id,
+           co.nombre as comunidad, l.codigo as lote,
+           e.kg_guinda_real, e.latas, e.precio_unitario_bs, e.total_pagado_bs,
+           e.estatus_declarado, e.revision, e.revision_nota
+    from entregas_acopio e
+    join codigos_productor cp on cp.id = e.codigo_productor_id
+    left join personas p      on p.id = e.persona_id
+    left join parcelas pa     on pa.id = e.parcela_id
+    left join comunidades co  on co.id = pa.comunidad_id
+    left join lotes l         on l.id = e.lote_id
+    where e.campania_id = $1
+      and ($2::text is null or e.revision::text = $2)
+      and ($3::text is null or co.nombre = $3)
+      and ($4::text is null or p.nombre ilike '%' || $4 || '%' or cp.codigo ilike '%' || $4 || '%')
+    order by e.fecha desc, cp.codigo
+    limit $5`,
+    [campania, revision ?? null, comunidad ?? null, buscar ?? null, limite])
+
+  res.json({ success: true, data: filas, count: filas.length })
+}))
+
+/** GET /api/lots/envios  -> los envios Taipiplaya -> La Paz */
+router.get('/envios', asyncHandler(async (req, res) => {
+  const filas = await q(`
+    select en.id, l.codigo as lote, l.certificacion, l.campania_id,
+           en.fecha_salida, en.fecha_llegada,
+           en.kg_pergamino_despachado, en.kg_pergamino_recibido, en.diferencia_kg,
+           en.nota_remision, en.vehiculo, en.conductor, en.responsable,
+           t.kg_guinda_real, t.entregas
+    from envios en
+    join lotes l          on l.id = en.lote_id
+    left join v_lote_totales t on t.lote_id = l.id
+    order by en.fecha_salida desc`)
+  res.json({ success: true, data: filas, count: filas.length })
+}))
+
+/** GET /api/lots/despachos  -> despachos y su contrato */
+router.get('/despachos', asyncHandler(async (req, res) => {
+  const filas = await q(`
+    select d.id, d.fecha_despacho, d.contenedor, d.precintos, d.kg_neto, d.responsable,
+           c.numero as contrato, c.certificacion, c.sacos, c.kg_por_saco, c.total_kg,
+           c.tipo_empaque, c.incoterm, c.puerto_destino,
+           cl.nombre as cliente, cl.pais,
+           e.fecha_embarque, e.bl_numero, e.naviera,
+           (select count(*)::int from despacho_lotes dl where dl.despacho_id = d.id) as lotes,
+           (select string_agg(l2.codigo, ', ' order by l2.codigo)
+              from despacho_lotes dl2 join lotes l2 on l2.id = dl2.lote_id
+             where dl2.despacho_id = d.id) as codigos_lote
+    from despachos d
+    left join contratos c     on c.id = d.contrato_id
+    left join clientes cl     on cl.id = c.cliente_id
+    left join exportaciones e on e.despacho_id = d.id
+    order by d.fecha_despacho desc`)
+  res.json({ success: true, data: filas, count: filas.length })
+}))
+
 /** GET /api/lots/:codigo  -> cabecera + cadena completa del lote */
 router.get('/:codigo', asyncHandler(async (req, res) => {
   const { codigo } = req.params

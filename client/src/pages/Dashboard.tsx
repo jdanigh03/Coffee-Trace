@@ -1,8 +1,11 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Package, Users, Scale, AlertTriangle, ArrowRight } from 'lucide-react'
+import { Package, Users, Scale, AlertTriangle, ArrowRight, Eye, GitBranch, Download } from 'lucide-react'
 import { api } from '../api/client'
 import { useApi, fmtBs, fmtKg } from '../api/useApi'
 import Indicadores from '../components/Indicadores'
+import AccionesFila, { descargarCsv } from '../components/AccionesFila'
+import DetalleLote from '../components/DetalleLote'
 
 const CAMPANIA = 2025
 
@@ -32,6 +35,7 @@ function Tarjeta({ icono, titulo, valor, pie, tono = 'coffee' }: {
 export default function Dashboard() {
   const { datos, cargando, error } = useApi(() => api.dashboard(CAMPANIA), [])
   const { datos: indicadores } = useApi(() => api.indicadores(CAMPANIA), [])
+  const [loteAbierto, setLoteAbierto] = useState<string | null>(null)
 
   if (cargando) {
     return <div className="p-8 text-gray-500">Cargando datos de la campaña {CAMPANIA}...</div>
@@ -137,7 +141,14 @@ export default function Dashboard() {
       </div>
 
       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-        <h2 className="font-semibold text-gray-900 p-5 pb-3">Lotes de la campaña</h2>
+        <div className="flex items-center justify-between p-5 pb-3">
+          <h2 className="font-semibold text-gray-900">Lotes de la campaña</h2>
+          <button
+            onClick={() => descargarCsv(`lotes-${CAMPANIA}`, lotes)}
+            className="flex items-center gap-1.5 text-sm text-sky-700 hover:underline">
+            <Download size={15} /> Exportar CSV
+          </button>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
@@ -148,15 +159,17 @@ export default function Dashboard() {
                 <th className="px-5 py-2 font-semibold text-right">Entregas</th>
                 <th className="px-5 py-2 font-semibold text-right">Guinda (kg)</th>
                 <th className="px-5 py-2 font-semibold text-right">Observadas</th>
+                <th className="px-5 py-2 font-semibold text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {lotes.map((l) => (
                 <tr key={l.codigo} className="hover:bg-gray-50">
                   <td className="px-5 py-2 font-mono font-medium">
-                    <Link to={`/consultas?lote=${l.codigo}`} className="text-sky-700 hover:underline">
+                    <button onClick={() => setLoteAbierto(l.codigo)}
+                      className="text-sky-700 hover:underline">
                       {l.codigo}
-                    </Link>
+                    </button>
                   </td>
                   <td className="px-5 py-2 capitalize">{l.certificacion}</td>
                   <td className="px-5 py-2 capitalize text-gray-600">{l.estado}</td>
@@ -167,12 +180,24 @@ export default function Dashboard() {
                       ? <span className="text-amber-700 font-medium">{l.entregas_observadas}</span>
                       : <span className="text-gray-400">0</span>}
                   </td>
+                  <td className="px-5 py-2">
+                    <AccionesFila
+                      acciones={[
+                        { label: 'Ver detalle', icono: <Eye size={15} />,
+                          onClick: () => setLoteAbierto(l.codigo) },
+                        { label: 'Trazabilidad', icono: <GitBranch size={15} />,
+                          to: `/consultas?lote=${l.codigo}` },
+                      ]}
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
+
+      <DetalleLote codigo={loteAbierto} onCerrar={() => setLoteAbierto(null)} />
     </div>
   )
 }
