@@ -87,6 +87,66 @@ router.get('/despachos', asyncHandler(async (req, res) => {
   res.json({ success: true, data: filas, count: filas.length })
 }))
 
+/**
+ * POST /api/lots/entregas  -> registra una entrega de acopio.
+ *
+ * `latas` y `total_pagado_bs` NO se aceptan del cliente: son columnas generadas
+ * en Postgres. Si se enviaran, un error de calculo en el navegador quedaria
+ * registrado como si fuera el peso real.
+ */
+router.post('/entregas', asyncHandler(async (req, res) => {
+  const {
+    fecha, codigo_productor, kg_guinda_real, precio_unitario_bs,
+    campania_id = 2025, lote, observaciones,
+  } = req.body
+
+  if (!fecha || !codigo_productor || !kg_guinda_real || !precio_unitario_bs) {
+    return res.status(400).json({
+      success: false,
+      error: 'Faltan datos: fecha, codigo_productor, kg_guinda_real y precio_unitario_bs',
+    })
+  }
+  const kg = Number(kg_guinda_real)
+  const precio = Number(precio_unitario_bs)
+  if (!(kg > 0)) return res.status(400).json({ success: false, error: 'El peso debe ser mayor que 0' })
+  if (!(precio >= 0)) return res.status(400).json({ success: false, error: 'Precio invalido' })
+
+  const cp = await uno(
+    `select cp.id, cp.parcela_id, cp.persona_id, cp.nombre_excel
+     from codigos_productor cp where cp.codigo = $1 limit 1`, [codigo_productor])
+  if (!cp) {
+    return res.status(404).json({
+      success: false, error: `El codigo ${codigo_productor} no existe en el padron` })
+  }
+
+  let loteId = null
+  if (lote) {
+    const l = await uno('select id from lotes where codigo = $1', [lote])
+    if (!l) return res.status(404).json({ success: false, error: `El lote ${lote} no existe` })
+    loteId = l.id
+  }
+
+  // El estatus sale de la certificacion de la parcela, no del formulario:
+  // asi no se puede declarar organico un cafe de transicion a mano.
+  const cert = cp.parcela_id
+    ? await uno(`select estatus from certificaciones
+                 where parcela_id = $1 and campania_id = $2`, [cp.parcela_id, campania_id])
+    : null
+
+  // El trigger fn_validar_certificacion_entrega puede marcarla como observada.
+  const fila = await uno(`
+    insert into entregas_acopio
+      (campania_id, fecha, codigo_productor_id, parcela_id, persona_id,
+       kg_guinda_real, precio_unitario_bs, estatus_declarado, lote_id, observaciones)
+    values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+    returning id, fecha, kg_guinda_real, latas, precio_unitario_bs, total_pagado_bs,
+              estatus_declarado, revision, revision_nota`,
+    [campania_id, fecha, cp.id, cp.parcela_id, cp.persona_id, kg, precio,
+     cert?.estatus ?? null, loteId, observaciones ?? null])
+
+  res.status(201).json({ success: true, data: { ...fila, productor: cp.nombre_excel } })
+}))
+
 /** GET /api/lots/:codigo  -> cabecera + cadena completa del lote */
 router.get('/:codigo', asyncHandler(async (req, res) => {
   const { codigo } = req.params

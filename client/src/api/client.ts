@@ -322,6 +322,18 @@ export const api = {
     )
     return pedir<EntregaLista[]>(`/lots/entregas${p.toString() ? `?${p}` : ''}`)
   },
+  crearEntrega: (datos: Record<string, unknown>) =>
+    pedir<Entrega & { productor: string }>('/lots/entregas',
+      { method: 'POST', body: JSON.stringify(datos) }),
+
+  etapaRegistros: (slug: string) =>
+    pedir<Record<string, unknown>[]>(`/etapas/${slug}`) as Promise<
+      (Record<string, unknown> & { id: string; lote: string; certificacion: string
+                                   creado_en: string })[]>,
+  registrarEtapa: (slug: string, datos: Record<string, unknown>) =>
+    pedir<{ id: string }>(`/etapas/${slug}`, { method: 'POST', body: JSON.stringify(datos) }),
+  avanceFaseII: () => pedir<Record<string, boolean | string>[]>('/etapas/avance'),
+
   envios: () => pedir<Envio[]>('/lots/envios'),
   despachos: () => pedir<Despacho[]>('/lots/despachos'),
 

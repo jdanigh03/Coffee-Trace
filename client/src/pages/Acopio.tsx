@@ -6,6 +6,7 @@ import AccionesFila, { descargarCsv } from '../components/AccionesFila'
 import DetalleLote from '../components/DetalleLote'
 import DetalleProductor from '../components/DetalleProductor'
 import PhaseStepper from '../components/PhaseStepper'
+import FormularioAcopio from '../components/FormularioAcopio'
 import { ProcessPhase } from '../types'
 
 const CAMPANIA = 2025
@@ -18,7 +19,7 @@ export default function Acopio() {
   const [loteAbierto, setLoteAbierto] = useState<string | null>(null)
 
   const { datos: comunidades } = useApi(() => api.comunidades(), [])
-  const { datos, cargando, error } = useApi(
+  const { datos, cargando, error, recargar } = useApi(
     () => api.entregas({ campania: CAMPANIA, buscar, revision, comunidad, limit: 500 }),
     [buscar, revision, comunidad])
 
@@ -35,6 +36,8 @@ export default function Acopio() {
       </div>
 
       <PhaseStepper currentPhase={ProcessPhase.ACOPIO} />
+
+      <FormularioAcopio onRegistrado={recargar} />
 
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[220px]">

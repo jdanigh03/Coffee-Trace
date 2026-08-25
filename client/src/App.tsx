@@ -22,6 +22,7 @@ import Reportes from './pages/Reportes'
 import Consultas from './pages/Consultas'
 import Verificacion from './pages/Verificacion'
 import Configuracion from './pages/Configuracion'
+import Etapa from './pages/Procesos/Etapa'
 
 function AppLayout() {
   return (
@@ -36,6 +37,14 @@ function AppLayout() {
             <Route path="/acopio" element={<Acopio />} />
             <Route path="/plantas/taipiplaya" element={<PlantaTaipiplaya />} />
             <Route path="/plantas/el-alto" element={<PlantaElAlto />} />
+            {/* Etapas de la Fase II: una sola pantalla parametrizada por slug.
+                Sin estas rutas, el sidebar enlazaba a paginas en blanco. */}
+            <Route path="/procesos/tolva" element={<Etapa />} />
+            <Route path="/procesos/despulpado" element={<Etapa />} />
+            <Route path="/procesos/fermentacion" element={<Etapa />} />
+            <Route path="/procesos/lavado" element={<Etapa />} />
+            <Route path="/procesos/secado" element={<Etapa />} />
+            <Route path="/procesos/almacen-temporal" element={<Etapa />} />
             <Route path="/procesos/transporte" element={<Transporte />} />
             <Route path="/procesos/recepcion" element={<Recepcion />} />
             <Route path="/procesos/limpieza" element={<Limpieza />} />
