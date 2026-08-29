@@ -54,6 +54,18 @@ const ETAPAS = {
     columnas: ['lote_id', 'fecha_ingreso', 'ubicacion', 'temperatura_c', 'humedad_pct',
       'kg_acumulado', 'lotes_diarios', 'responsable', 'observaciones', 'estado'],
   },
+  // Escribe en `envios`, no en una tabla propia: el despacho y el envio son el
+  // mismo camion. `nota_remision` se omite a proposito para que la genere el
+  // default de la base con su secuencia.
+  'despacho-alto': {
+    tabla: 'envios',
+    // `envios` es anterior a este modulo y no tiene columna `creado_en`.
+    orden: 'fecha_salida',
+    columnas: ['lote_id', 'fecha_salida', 'kg_pergamino_despachado', 'numero_bolsas',
+      'vehiculo', 'tipo_vehiculo', 'conductor', 'documentos_verificados',
+      'temperatura_vehiculo', 'responsable', 'responsable_transportista',
+      'remitente', 'destinatario', 'direccion_destino', 'observaciones'],
+  },
 }
 
 const vacio = (v) => v === '' || v === undefined || v === null
@@ -72,7 +84,7 @@ router.get('/:etapa', asyncHandler(async (req, res) => {
     select e.*, l.codigo as lote, l.certificacion
     from ${def.tabla} e
     join lotes l on l.id = e.lote_id
-    order by e.creado_en desc
+    order by e.${def.orden ?? 'creado_en'} desc nulls last
     limit 200`)
 
   if (def.lecturas && filas.length) {

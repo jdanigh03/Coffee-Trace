@@ -59,7 +59,7 @@ export const PHASES: PhaseDefinition[] = [
   { order: 6,  ordenEnFase: 5, fase: 'II', phase: ProcessPhase.LAVADO,        label: 'Lavado',              path: '/procesos/lavado',          actor: 'Jefe de Lavado',     plant: 'Taipiplaya', pendiente: true },
   { order: 7,  ordenEnFase: 6, fase: 'II', phase: ProcessPhase.SECADO,        label: 'Secado',              path: '/procesos/secado',          actor: 'Jefe de Secado',     plant: 'Taipiplaya', pendiente: true },
   { order: 8,  ordenEnFase: 7, fase: 'II', phase: ProcessPhase.ALMACEN_TEMP,  label: 'Almacen y lote',      path: '/procesos/almacen-temporal',actor: 'Responsable de Planta', plant: 'Taipiplaya', pendiente: true },
-  { order: 9,  ordenEnFase: 8, fase: 'II', phase: ProcessPhase.DESPACHO_ALTO, label: 'Despacho a El Alto',  path: '/procesos/transporte',      actor: 'Responsable de Planta', plant: 'Taipiplaya' },
+  { order: 9,  ordenEnFase: 8, fase: 'II', phase: ProcessPhase.DESPACHO_ALTO, label: 'Despacho a El Alto',  path: '/procesos/despacho-alto',   actor: 'Jefe de Planta Taipiplaya', plant: 'Taipiplaya' },
 
   // ---------- Fase III: beneficio seco (El Alto) ----------
   { order: 10, ordenEnFase: 1, fase: 'III', phase: ProcessPhase.TRANSPORTE,  label: 'Transporte',        path: '/procesos/transporte',     actor: 'Transportista',        plant: 'Transito' },

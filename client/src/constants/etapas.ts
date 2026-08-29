@@ -199,4 +199,48 @@ export const ETAPAS: EtapaDefinicion[] = [
   },
 ]
 
+// Etapa 8 de la Fase II. Se declara aparte del bloque anterior porque no
+// escribe en una tabla `etapa_*` sino en `envios`: el despacho y el envio a
+// La Paz son el mismo camion.
+ETAPAS.push({
+  slug: 'despacho-alto',
+  titulo: 'Despacho hacia El Alto',
+  actor: 'Jefe de planta Taipiplaya',
+  descripcion:
+    'El lote de exportación se despacha a la Planta de Beneficio Seco en El Alto. ' +
+    'Se genera la NOTA DE REMISIÓN oficial con transportista y vehículo. El lote debe ' +
+    'quedar identificado en la nota: es lo que conecta el papel del transportista con ' +
+    'la trazabilidad del sistema.',
+  campos: [
+    { clave: 'kg_pergamino_despachado', label: 'Peso de salida', tipo: 'numero', unidad: 'kg',
+      requerido: true, ayuda: 'Peso verificado en balanza antes de cargar' },
+    { clave: 'numero_bolsas', label: 'Número de bolsas', tipo: 'numero',
+      ayuda: 'Permite cotejar el conteo físico al recibir en El Alto' },
+    { clave: 'fecha_salida', label: 'Fecha y hora de salida', tipo: 'hora', requerido: true },
+
+    { clave: 'remitente', label: 'Remitente', tipo: 'texto' },
+    { clave: 'destinatario', label: 'Destinatario', tipo: 'texto' },
+    { clave: 'direccion_destino', label: 'Dirección de destino', tipo: 'texto' },
+
+    { clave: 'responsable_transportista', label: 'Transportista', tipo: 'texto',
+      ayuda: 'Empresa o persona responsable del traslado' },
+    { clave: 'vehiculo', label: 'Vehículo (placa)', tipo: 'texto' },
+    { clave: 'tipo_vehiculo', label: 'Tipo de vehículo', tipo: 'select', opciones: [
+      { valor: 'camion', label: 'Camión' },
+      { valor: 'camioneta', label: 'Camioneta' },
+      { valor: 'furgon', label: 'Furgón' },
+    ] },
+    { clave: 'conductor', label: 'Conductor', tipo: 'texto' },
+    { clave: 'documentos_verificados', label: '¿Documentos del conductor verificados?',
+      tipo: 'booleano' },
+    { clave: 'temperatura_vehiculo', label: 'Temperatura del vehículo', tipo: 'select',
+      opciones: [
+        { valor: 'ambiente', label: 'Ambiente (normal)' },
+        { valor: 'refrigerado', label: 'Refrigerado' },
+      ] },
+    { clave: 'responsable', label: 'Responsable de planta', tipo: 'texto' },
+    { clave: 'observaciones', label: 'Observaciones', tipo: 'area' },
+  ],
+})
+
 export const getEtapa = (slug: string) => ETAPAS.find((e) => e.slug === slug)

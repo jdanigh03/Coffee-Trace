@@ -45,6 +45,7 @@ function AppLayout() {
             <Route path="/procesos/lavado" element={<Etapa />} />
             <Route path="/procesos/secado" element={<Etapa />} />
             <Route path="/procesos/almacen-temporal" element={<Etapa />} />
+            <Route path="/procesos/despacho-alto" element={<Etapa />} />
             <Route path="/procesos/transporte" element={<Transporte />} />
             <Route path="/procesos/recepcion" element={<Recepcion />} />
             <Route path="/procesos/limpieza" element={<Limpieza />} />
