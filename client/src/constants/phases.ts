@@ -71,8 +71,33 @@ export const PHASES: PhaseDefinition[] = [
   { order: 16, ordenEnFase: 7, fase: 'III', phase: ProcessPhase.EXPORTACION, label: 'Despacho a exportacion', path: '/procesos/exportacion', actor: 'Comercializacion', plant: 'Puerto' },
 ]
 
+/**
+ * Pantallas que cuelgan de una fase pero no son un eslabon de la cadena.
+ *
+ * La sultana sale del despulpado en paralelo al cafe: no se numera dentro del
+ * stepper porque el lote no "pasa por" ella, pero sin registrarla el balance de
+ * masa de la Fase II no cierra.
+ */
+export interface ExtraDefinition {
+  fase: FaseId
+  label: string
+  path: string
+  actor: string
+  /** Etapa de la que se desprende, para explicar de donde sale */
+  derivaDe: string
+}
+
+export const EXTRAS: ExtraDefinition[] = [
+  { fase: 'II', label: 'Sultana (pulpa)', path: '/procesos/sultana',
+    actor: 'Jefe de maquinas', derivaDe: 'Despulpado' },
+]
+
 export const fasesConEtapas = () =>
-  FASES.map((f) => ({ ...f, etapas: PHASES.filter((p) => p.fase === f.id) }))
+  FASES.map((f) => ({
+    ...f,
+    etapas: PHASES.filter((p) => p.fase === f.id),
+    extras: EXTRAS.filter((e) => e.fase === f.id),
+  }))
 
 export function getPhase(phase: ProcessPhase): PhaseDefinition | undefined {
   return PHASES.find((p) => p.phase === phase)

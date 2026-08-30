@@ -161,6 +161,36 @@ export default function Sidebar() {
                         </li>
                       )
                     })}
+
+                    {/* Subproductos: cuelgan de la fase pero no se numeran,
+                        porque el lote no pasa por ellos. */}
+                    {fase.extras.map((extra) => {
+                      const active = isActive(extra.path)
+                      return (
+                        <li key={`${fase.id}-${extra.path}`}>
+                          <Link
+                            to={extra.path}
+                            onClick={() => window.innerWidth < 768 && toggleSidebar()}
+                            title={`${extra.actor} - subproducto de ${extra.derivaDe}`}
+                            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition ${
+                              active
+                                ? 'bg-sky-200 text-sky-900 font-medium'
+                                : 'text-gray-700 hover:bg-sky-100'
+                            }`}
+                          >
+                            <span
+                              className={`w-6 h-6 flex-shrink-0 rounded-full flex items-center justify-center text-xs font-semibold ${
+                                active ? 'bg-coffee-700 text-white' : 'bg-white text-gray-400'
+                              }`}
+                            >
+                              +
+                            </span>
+                            <span className="flex-1 text-sm">{extra.label}</span>
+                            {active && <ChevronRight size={16} />}
+                          </Link>
+                        </li>
+                      )
+                    })}
                   </ul>
                 </div>
               ))}

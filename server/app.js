@@ -38,6 +38,7 @@ function describirCadena(valor) {
 import lotRoutes from './routes/lots.js'
 import notificacionRoutes from './routes/notificaciones.js'
 import etapaRoutes from './routes/etapas.js'
+import sultanaRoutes from './routes/sultana.js'
 import configuracionRoutes from './routes/configuracion.js'
 import producerRoutes from './routes/producers.js'
 import blockchainRoutes from './routes/blockchain.js'
@@ -63,6 +64,7 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
 app.use('/api/etapas', etapaRoutes)
+app.use('/api/sultana', sultanaRoutes)
 app.use('/api/notificaciones', notificacionRoutes)
 app.use('/api/configuracion', configuracionRoutes)
 app.use('/api/lots', lotRoutes)

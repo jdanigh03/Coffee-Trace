@@ -60,8 +60,8 @@ export const ETAPAS: EtapaDefinicion[] = [
     actor: 'Jefe de máquinas',
     descripcion:
       'La despulpadora separa la pulpa (sultana) del café. Conversión típica: 69% despulpado ' +
-      'y 31% sultana. Hoy no se registra a dónde va la sultana, y sin ese dato el balance de ' +
-      'masa de la fase no cierra.',
+      'y 31% sultana. El destino de la sultana se registra en su propia pantalla, porque ' +
+      'tiene sacos y valor propios: Fase II › Sultana (pulpa).',
     campos: [
       { clave: 'kg_entrada', label: 'Peso de entrada', tipo: 'numero', unidad: 'kg', requerido: true },
       { clave: 'maquina', label: 'Máquina asignada', tipo: 'texto', ayuda: 'Una por categoría' },
@@ -74,15 +74,9 @@ export const ETAPAS: EtapaDefinicion[] = [
       { clave: 'velocidad_rpm', label: 'Velocidad', tipo: 'numero', unidad: 'RPM' },
       { clave: 'kg_despulpado', label: 'Café despulpado', tipo: 'numero', unidad: 'kg',
         calculado: 'entrada × 0,69' },
-      { clave: 'kg_sultana', label: 'Sultana producida', tipo: 'numero', unidad: 'kg',
-        calculado: 'entrada × 0,31' },
-      { clave: 'destino_sultana', label: 'Destino de la sultana', tipo: 'select', opciones: [
-        { valor: 'combustible', label: 'Combustible para hornos' },
-        { valor: 'venta', label: 'Venta' },
-        { valor: 'consumo_local', label: 'Consumo local' },
-        { valor: 'abono', label: 'Abono' },
-      ] },
-      { clave: 'responsable_sultana', label: 'Responsable de la sultana', tipo: 'texto' },
+      // La sultana (kg, destino, sacos, responsable) se registra en
+      // /procesos/sultana. Tenerla aqui tambien permitiria declarar dos
+      // destinos distintos para la misma pulpa.
       { clave: 'incidencias', label: 'Incidencias', tipo: 'area' },
     ],
   },

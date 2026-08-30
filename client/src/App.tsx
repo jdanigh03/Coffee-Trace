@@ -23,6 +23,7 @@ import Consultas from './pages/Consultas'
 import Verificacion from './pages/Verificacion'
 import Configuracion from './pages/Configuracion'
 import Etapa from './pages/Procesos/Etapa'
+import Sultana from './pages/Procesos/Sultana'
 
 function AppLayout() {
   return (
@@ -46,6 +47,9 @@ function AppLayout() {
             <Route path="/procesos/secado" element={<Etapa />} />
             <Route path="/procesos/almacen-temporal" element={<Etapa />} />
             <Route path="/procesos/despacho-alto" element={<Etapa />} />
+            {/* Subproducto del despulpado: pantalla propia, no una etapa mas
+                de la cadena. */}
+            <Route path="/procesos/sultana" element={<Sultana />} />
             <Route path="/procesos/transporte" element={<Transporte />} />
             <Route path="/procesos/recepcion" element={<Recepcion />} />
             <Route path="/procesos/limpieza" element={<Limpieza />} />

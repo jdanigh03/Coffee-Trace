@@ -149,6 +149,38 @@ export interface Despacho {
   codigos_lote: string | null
 }
 
+export type DestinoSultana = 'combustible' | 'venta' | 'compost'
+
+/** Una fila de v_sultana_lote: cuanta pulpa toca al lote y cuanta se acredito. */
+export interface SultanaLote {
+  lote_id: string
+  codigo: string
+  certificacion: Certificacion
+  campania_id: number
+  kg_guinda_real: number
+  kg_sultana_esperada: number
+  kg_sultana_registrada: number
+  sacos: number
+  valor_estimado_bs: number
+  destinos: string | null
+  /** Pulpa sin destino acreditado. Mientras sea > 0 el balance de masa no cierra. */
+  kg_sin_registrar: number
+}
+
+export interface SultanaRegistro {
+  id: string
+  lote: string
+  certificacion: Certificacion
+  fecha: string
+  kg_sultana: number
+  destino: DestinoSultana
+  numero_sacos: number | null
+  valor_estimado_bs: number | null
+  responsable: string | null
+  observaciones: string | null
+  creado_en: string
+}
+
 export interface Productor {
   id: string
   nombre: string
@@ -333,6 +365,18 @@ export const api = {
   registrarEtapa: (slug: string, datos: Record<string, unknown>) =>
     pedir<{ id: string }>(`/etapas/${slug}`, { method: 'POST', body: JSON.stringify(datos) }),
   avanceFaseII: () => pedir<Record<string, boolean | string>[]>('/etapas/avance'),
+
+  // La sultana no devuelve solo `data`: el factor y los precios vienen al lado
+  // para que el formulario calcule los kg y el valor sin una segunda llamada.
+  sultanaLotes: () => pedir<{
+    lotes: SultanaLote[]
+    factor: number
+    precios: Record<DestinoSultana, number>
+  }>('/sultana/lotes'),
+  sultana: () => pedir<SultanaRegistro[]>('/sultana'),
+  registrarSultana: (datos: Record<string, unknown>) =>
+    pedir<SultanaRegistro & { factor_usado: number; precio_por_kg: number }>('/sultana',
+      { method: 'POST', body: JSON.stringify(datos) }),
 
   envios: () => pedir<Envio[]>('/lots/envios'),
   despachos: () => pedir<Despacho[]>('/lots/despachos'),
