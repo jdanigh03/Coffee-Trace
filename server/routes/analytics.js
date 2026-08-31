@@ -42,12 +42,18 @@ router.get('/dashboard', asyncHandler(async (req, res) => {
  */
 router.get('/indicadores', asyncHandler(async (req, res) => {
   const campania = Number(req.query.campania ?? 2025)
-  const [total, porCert, serie] = await Promise.all([
-    uno(`select * from v_indicadores_campania where campania_id = $1`, [campania]),
-    q(`select * from v_indicadores_exportacion where campania_id = $1
-        order by certificacion`, [campania]),
-    q(`select * from v_indicadores_campania order by campania_id`),
-  ])
+  const [total, porCert, serie, escenario, escenarioCert, cobertura, coberturaResumen] =
+    await Promise.all([
+      uno(`select * from v_indicadores_campania where campania_id = $1`, [campania]),
+      q(`select * from v_indicadores_exportacion where campania_id = $1
+          order by certificacion`, [campania]),
+      q(`select * from v_indicadores_campania order by campania_id`),
+      uno(`select * from v_indicadores_escenario_campania where campania_id = $1`, [campania]),
+      q(`select * from v_indicadores_escenario where campania_id = $1
+          order by certificacion`, [campania]),
+      q('select * from v_cobertura_cadena order by orden'),
+      uno('select * from v_cobertura_resumen'),
+    ])
   res.json({
     success: true,
     data: {
@@ -55,6 +61,11 @@ router.get('/indicadores', asyncHandler(async (req, res) => {
       total,
       porCertificacion: porCert,
       serie,
+      // Proyeccion, no medicion: lo que darian los indicadores si se cumplen
+      // los supuestos del grupo "escenario" de parametros.
+      escenario: escenario ? { ...escenario, porCertificacion: escenarioCert } : null,
+      // Esto si es medicion: cuantos eslabones de la cadena tienen registro.
+      cobertura: { ...coberturaResumen, etapasDetalle: cobertura },
       // Si todos los lotes son estimados, el indicador se calculo sobre
       // factores fijos y no sobre pesos medidos. La UI debe decirlo.
       baseEstimada: total ? total.lotes_estimados === total.lotes : null,

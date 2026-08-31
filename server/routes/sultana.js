@@ -7,6 +7,7 @@ const PRECIO = {
   combustible: 'sultana_precio_combustible',
   venta: 'sultana_precio_venta',
   compost: 'sultana_precio_compost',
+  entrega_familias: 'sultana_precio_entrega_familias',
 }
 
 async function parametro(clave, porDefecto) {
@@ -24,6 +25,7 @@ router.get('/lotes', asyncHandler(async (req, res) => {
       combustible: await parametro(PRECIO.combustible, 0),
       venta: await parametro(PRECIO.venta, 0),
       compost: await parametro(PRECIO.compost, 0),
+      entrega_familias: await parametro(PRECIO.entrega_familias, 0),
     }))(),
   ])
   // Todo dentro de `data`: el cliente desenvuelve esa clave y si el factor

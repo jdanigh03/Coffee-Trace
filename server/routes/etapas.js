@@ -54,6 +54,29 @@ const ETAPAS = {
     columnas: ['lote_id', 'fecha_ingreso', 'ubicacion', 'temperatura_c', 'humedad_pct',
       'kg_acumulado', 'lotes_diarios', 'responsable', 'observaciones', 'estado'],
   },
+  // ---- Fase III (El Alto) ----
+  // Tablas propias y no columnas dentro de beneficio_seco: esa tabla guarda el
+  // agregado por lote del que salen los indicadores, y escribir el detalle de
+  // cada etapa encima cambiaria el TEE.
+  trillado: {
+    tabla: 'etapa_trillado',
+    columnas: ['lote_id', 'fecha_inicio', 'fecha_fin', 'kg_pergamino_entrada',
+      'kg_verde_sin_seleccionar', 'kg_cascarilla', 'kg_caracol', 'kg_descarte_mecanico',
+      'rendimiento_pct', 'operador', 'equipo_linea', 'observaciones', 'estado'],
+  },
+  seleccion: {
+    tabla: 'etapa_seleccion',
+    columnas: ['lote_id', 'fecha_inicio', 'fecha_fin', 'kg_asignado', 'kg_devuelto',
+      'kg_defectos', 'tasa_defecto_pct', 'seleccionadoras', 'kg_por_seleccionadora',
+      'balance_cuadra', 'responsable', 'observaciones', 'estado'],
+  },
+  empaque: {
+    tabla: 'etapa_empaque',
+    columnas: ['lote_id', 'fecha_ingreso', 'kg_verde_oro', 'tipo_empaque', 'numero_sacos',
+      'kg_por_saco', 'ubicacion', 'temperatura_c', 'humedad_pct', 'responsable',
+      'observaciones', 'estado'],
+  },
+
   // Escribe en `envios`, no en una tabla propia: el despacho y el envio son el
   // mismo camion. `nota_remision` se omite a proposito para que la genere el
   // default de la base con su secuencia.
@@ -73,6 +96,11 @@ const vacio = (v) => v === '' || v === undefined || v === null
 /** GET /api/etapas/avance  -> que etapas tiene cubierta cada lote */
 router.get('/avance', asyncHandler(async (req, res) => {
   res.json({ success: true, data: await q('select * from v_avance_fase_ii order by codigo') })
+}))
+
+/** GET /api/etapas/avance-fase-iii */
+router.get('/avance-fase-iii', asyncHandler(async (req, res) => {
+  res.json({ success: true, data: await q('select * from v_avance_fase_iii order by codigo') })
 }))
 
 /** GET /api/etapas/:etapa  -> registros de esa etapa, con su lote */

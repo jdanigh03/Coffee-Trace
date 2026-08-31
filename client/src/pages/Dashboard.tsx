@@ -4,6 +4,8 @@ import { Package, Users, Scale, AlertTriangle, ArrowRight, Eye, GitBranch, Downl
 import { api } from '../api/client'
 import { useApi, fmtBs, fmtKg } from '../api/useApi'
 import Indicadores from '../components/Indicadores'
+import CoberturaCadena from '../components/CoberturaCadena'
+import EscenarioPropuesto from '../components/EscenarioPropuesto'
 import AccionesFila, { descargarCsv } from '../components/AccionesFila'
 import DetalleLote from '../components/DetalleLote'
 
@@ -66,6 +68,12 @@ export default function Dashboard() {
 
       {/* Los indicadores van primero: son la variable dependiente del proyecto. */}
       {indicadores && <Indicadores datos={indicadores} />}
+
+      {/* Lo que la plataforma mejora de forma medible es la cobertura: va
+          justo despues de los indicadores y antes de la proyeccion, para que
+          no se confunda una cosa con la otra. */}
+      {indicadores?.cobertura && <CoberturaCadena datos={indicadores.cobertura} />}
+      {indicadores?.escenario && <EscenarioPropuesto datos={indicadores.escenario} />}
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Tarjeta icono={<Scale size={20} />} titulo="Café guinda acopiado"

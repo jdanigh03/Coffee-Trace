@@ -15,6 +15,8 @@ const DESTINOS: { valor: DestinoSultana; label: string; nota: string }[] = [
   { valor: 'combustible', label: 'Combustible para hornos', nota: 'Se quema en el secado' },
   { valor: 'venta', label: 'Venta', nota: 'Sale de la planta con comprobante' },
   { valor: 'compost', label: 'Compost / abono', nota: 'Vuelve a las parcelas' },
+  { valor: 'entrega_familias', label: 'Entrega a familias socias',
+    nota: 'Se reparte a los socios para sus propias parcelas' },
 ]
 
 export default function Sultana() {
@@ -43,7 +45,9 @@ export default function Sultana() {
   const valor = kgSultana != null && destino && precios
     ? kgSultana * (precios[destino] ?? 0) : null
 
-  const sinRegistrar = lotes.filter((l) => l.kg_sin_registrar > 1)
+  // La tolerancia la fija la base (1 % por defecto): anotar jornada por jornada
+  // deja un resto de redondeo que no es pulpa perdida.
+  const sinRegistrar = lotes.filter((l) => l.kg_sin_registrar > l.tolerancia_kg)
   const kgPendientes = sinRegistrar.reduce((a, l) => a + Number(l.kg_sin_registrar), 0)
 
   const guardar = async () => {
@@ -246,7 +250,8 @@ export default function Sultana() {
                   <td className="px-5 py-2">{fmtKg(l.kg_sultana_esperada)}</td>
                   <td className="px-5 py-2">{fmtKg(l.kg_sultana_registrada)}</td>
                   <td className={`px-5 py-2 font-medium ${
-                    Number(l.kg_sin_registrar) > 1 ? 'text-amber-700' : 'text-green-700'}`}>
+                    Number(l.kg_sin_registrar) > Number(l.tolerancia_kg)
+                      ? 'text-amber-700' : 'text-green-700'}`}>
                     {fmtKg(l.kg_sin_registrar)}
                   </td>
                   <td className="px-5 py-2 text-gray-600">{l.destinos ?? '--'}</td>

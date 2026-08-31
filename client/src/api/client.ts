@@ -149,7 +149,7 @@ export interface Despacho {
   codigos_lote: string | null
 }
 
-export type DestinoSultana = 'combustible' | 'venta' | 'compost'
+export type DestinoSultana = 'combustible' | 'venta' | 'compost' | 'entrega_familias'
 
 /** Una fila de v_sultana_lote: cuanta pulpa toca al lote y cuanta se acredito. */
 export interface SultanaLote {
@@ -163,8 +163,10 @@ export interface SultanaLote {
   sacos: number
   valor_estimado_bs: number
   destinos: string | null
-  /** Pulpa sin destino acreditado. Mientras sea > 0 el balance de masa no cierra. */
+  /** Pulpa sin destino acreditado. Mientras supere la tolerancia, el balance no cierra. */
   kg_sin_registrar: number
+  /** Margen por debajo del cual la diferencia es solo redondeo de las jornadas. */
+  tolerancia_kg: number
 }
 
 export interface SultanaRegistro {
@@ -259,11 +261,59 @@ export interface IndicadorFila {
   inconsistente?: boolean
 }
 
+/**
+ * Proyeccion en dos pasos.
+ *
+ * Sin sufijo = lo que la plataforma mide hoy.
+ * `_a` = escenario ATRIBUIBLE AL SISTEMA: documentar toda salida hace que el
+ *        producto sin destino baje a cero. No depende de nadie mas.
+ * `_b` = escenario que ademas exige DECISION COMERCIAL: bajar el inventario
+ *        inmovilizado a la meta de cada categoria (parametros del grupo
+ *        "escenario"). La trazabilidad lo habilita, no lo ejecuta.
+ */
+export interface EscenarioFila {
+  certificacion?: Certificacion
+  tin_meta_pct?: number
+  vop: number; voe: number; vos: number; vond: number
+  tee: number | null; tin: number | null; tnd: number | null
+  voe_a: number; vos_a: number; vond_a: number
+  tee_a: number | null; tin_a: number | null; tnd_a: number | null
+  voe_b: number; vos_b: number; vond_b: number
+  tee_b: number | null; tin_b: number | null; tnd_b: number | null
+}
+
+export interface Escenario extends EscenarioFila {
+  campania_id: number
+  porCertificacion: EscenarioFila[]
+}
+
+/** Un eslabon de la cadena y cuantos registros tiene. Esto si se mide. */
+export interface EtapaCobertura {
+  orden: number
+  fase: 'I' | 'II' | 'III'
+  etapa: string
+  fuente: string
+  registros: number
+  cubierta: boolean
+}
+
+export interface Cobertura {
+  etapas: number
+  etapas_cubiertas: number
+  registros: number
+  cobertura_pct: number
+  etapasDetalle: EtapaCobertura[]
+}
+
 export interface Indicadores {
   campania: number
   total: IndicadorFila | null
   porCertificacion: IndicadorFila[]
   serie: IndicadorFila[]
+  /** Proyeccion bajo supuestos declarados. No es lo que mide la plataforma. */
+  escenario: Escenario | null
+  /** Cobertura real de la cadena: cuantos eslabones tienen registro. */
+  cobertura: Cobertura
   /** true = ningun lote tiene el verde oro pesado; todo sale de factores */
   baseEstimada: boolean | null
 }
