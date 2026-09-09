@@ -386,6 +386,46 @@ export interface Inconsistencia {
   revision: Revision; revision_nota: string | null
 }
 
+// ------------------------------------------------------- portada publica
+
+/**
+ * Lo que ve cualquiera sin iniciar sesion. Ningun tipo de aqui lleva nombres
+ * de productores ni importes: la portada cuenta personas, no las nombra.
+ */
+export interface ResumenPublico {
+  campania: number
+  organizacion: { nombre: string; codigo_ico: string | null } | null
+  cobertura: Cobertura
+  alcance: { productores: number; comunidades: number; lotes: number; kg_guinda: number }
+  paises: { pais: string; embarques: number; kg: number }[]
+  certificaciones: string[]
+  lotes: { codigo: string; certificacion: Certificacion; campania_id: number; estado: string }[]
+  blockchain: { redDesplegada: boolean; sellos: number }
+}
+
+export interface LotePublico {
+  lote: {
+    codigo: string; certificacion: Certificacion; campania_id: number; estado: string
+    entregas: number; kg_guinda_real: number
+    kg_pergamino_calc: number | null; kg_verde_oro_calc: number | null
+  }
+  origen: { productores: number; comunidades: number; lista_comunidades: string | null } | null
+  faseII: Record<string, boolean> | null
+  faseIII: Record<string, boolean> | null
+  envio: {
+    fecha_salida: string; fecha_llegada: string | null; nota_remision: string | null
+    kg_pergamino_despachado: number | null; kg_pergamino_recibido: number | null
+    diferencia_kg: number | null
+  } | null
+  exportacion: {
+    fecha_despacho: string; pais: string | null; fecha_embarque: string
+    puerto_salida: string | null; naviera: string | null
+    certificaciones: string[] | null; kg_asignados: number
+  } | null
+  sellos: { tabla_origen: string; hash_sha256: string; sellado_en: string
+            block_number: number | null }[]
+}
+
 // ---------------------------------------------------------------- llamadas
 
 export const api = {
@@ -467,6 +507,11 @@ export const api = {
   activarCampania: (campania: number) =>
     pedir<{ id: number; activa: boolean }[]>('/configuracion/campania-activa',
       { method: 'PATCH', body: JSON.stringify({ campania }) }),
+
+  resumenPublico: (campania = 2025) =>
+    pedir<ResumenPublico>(`/publico/resumen?campania=${campania}`),
+  lotePublico: (codigo: string) =>
+    pedir<LotePublico>(`/publico/lote/${encodeURIComponent(codigo)}`),
 
   estadoBlockchain: () => pedir<EstadoBlockchain>('/blockchain/status'),
   cadenaDeLote: (codigo: string) =>

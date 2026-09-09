@@ -6,6 +6,7 @@ import Header from './components/Header'
 import Sidebar from './components/Sidebar'
 
 // Pages
+import Landing from './pages/Landing'
 import Dashboard from './pages/Dashboard'
 import Productores from './pages/Productores'
 import Acopio from './pages/Acopio'
@@ -25,6 +26,11 @@ import Configuracion from './pages/Configuracion'
 import Etapa from './pages/Procesos/Etapa'
 import Sultana from './pages/Procesos/Sultana'
 
+/**
+ * El ERP. Vive bajo su propio layout con barra lateral y cabecera; la portada
+ * publica queda fuera, porque no debe mostrar ni el menu ni el estado interno
+ * del sistema a quien no ha entrado.
+ */
 function AppLayout() {
   return (
     <div className="flex h-screen bg-gray-50">
@@ -33,7 +39,7 @@ function AppLayout() {
         <Header />
         <main className="flex-1 overflow-auto">
           <Routes>
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/productores" element={<Productores />} />
             <Route path="/acopio" element={<Acopio />} />
             <Route path="/plantas/taipiplaya" element={<PlantaTaipiplaya />} />
@@ -86,7 +92,14 @@ function App() {
 
   return (
     <BrowserRouter>
-      <AppLayout />
+      <Routes>
+        {/* La portada publica va sola: sin barra lateral, sin cabecera y sin
+            tocar el estado interno del sistema. */}
+        <Route path="/" element={<Landing />} />
+        {/* Todo lo demas es el ERP. `/*` deja que AppLayout resuelva sus
+            propias rutas sin repetirlas aqui. */}
+        <Route path="/*" element={<AppLayout />} />
+      </Routes>
     </BrowserRouter>
   )
 }

@@ -57,6 +57,12 @@ blockchain/chaincode/dist/
 # Maquetas de Stitch: ~12 capturas PNG que no hacen falta para desplegar.
 stitch_trazabilidad_blockchain_asocaf_taipiplaya/
 
+# Carpeta de trabajo de la pagina principal: originales y la maqueta de
+# referencia. Las cuatro imagenes que la pagina realmente usa estan copiadas
+# en client/public/marca/, que SI se sube: si no, Vercel serviria la portada
+# con las fotos rotas.
+Elementos pagina principal/
+
 # Diagramas del workflow original (3,3 MB en PNG).
 # Patron acotado a la raiz a proposito: un `*workflow*` suelto ignoraria
 # tambien .github/workflows/ y romperia las GitHub Actions.

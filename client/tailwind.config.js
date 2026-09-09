@@ -30,10 +30,24 @@ export default {
           700: '#0369a1',
           800: '#075985',
           900: '#0c3d66',
-        }
+        },
+        // Verde de la marca ASOCAFE, tomado del logo y de la maqueta de la
+        // portada. El ERP sigue usando coffee/sky.
+        verde: {
+          50: '#f1f7f3',
+          100: '#dceae1',
+          200: '#b9d6c4',
+          500: '#2f8a58',
+          600: '#237a4a',
+          700: '#1b6b41',
+          800: '#14512f',
+          900: '#0e3a23',
+        },
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['Lora', 'Georgia', 'serif'],
+        script: ['Caveat', 'cursive'],
       },
     },
   },

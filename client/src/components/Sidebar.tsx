@@ -17,11 +17,11 @@ export default function Sidebar() {
   const location = useLocation()
   const { sidebarOpen, toggleSidebar } = useAppStore()
 
-  const isActive = (path: string) =>
-    path === '/' ? location.pathname === '/' : location.pathname.startsWith(path)
+  const isActive = (path: string) => location.pathname.startsWith(path)
 
   const operaciones = [
-    { label: 'Dashboard', path: '/', icon: BarChart3 },
+    // El dashboard dejo de vivir en '/': esa ruta es ahora la portada publica.
+    { label: 'Dashboard', path: '/dashboard', icon: BarChart3 },
     { label: 'Productores', path: '/productores', icon: Users },
     { label: 'Planta Taipiplaya', path: '/plantas/taipiplaya', icon: Droplet },
     { label: 'Planta El Alto', path: '/plantas/el-alto', icon: Cpu },
@@ -58,15 +58,17 @@ export default function Sidebar() {
         } fixed left-0 top-0 h-screen w-64 bg-gradient-to-b from-sky-50 to-sky-100 border-r border-sky-200 overflow-y-auto z-40 transition-transform md:relative md:translate-x-0 md:z-auto flex flex-col`}
       >
         <div className="p-6 flex-1">
-          <div className="flex items-center gap-2 mb-8">
+          {/* Vuelve a la portada publica: es la salida del ERP hacia la cara
+              que ve el comprador. */}
+          <Link to="/" className="flex items-center gap-2 mb-8 group">
             <div className="w-10 h-10 bg-coffee-700 rounded-lg flex items-center justify-center text-white font-bold">
               CT
             </div>
             <div>
-              <h1 className="font-bold text-coffee-900">CoffeeTrace</h1>
-              <p className="text-xs text-gray-600">Precision Logistics</p>
+              <h1 className="font-bold text-coffee-900 group-hover:underline">CoffeeTrace</h1>
+              <p className="text-xs text-gray-600">Del origen al mundo</p>
             </div>
-          </div>
+          </Link>
 
           <nav className="space-y-8">
             <div>
