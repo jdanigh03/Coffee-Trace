@@ -103,6 +103,49 @@ router.get('/avance-fase-iii', asyncHandler(async (req, res) => {
   res.json({ success: true, data: await q('select * from v_avance_fase_iii order by codigo') })
 }))
 
+/**
+ * GET /api/etapas/recepcion  -> los envios con lo despachado y lo recibido.
+ *
+ * Va aparte del modulo generico porque la recepcion no inserta una fila: el
+ * envio ya existe desde el despacho y lo que hace la llegada es completarlo.
+ */
+router.get('/recepcion', asyncHandler(async (req, res) => {
+  res.json({ success: true, data: await q('select * from v_recepciones') })
+}))
+
+/** Columnas que la llegada puede escribir sobre un envio ya despachado. */
+const RECEPCION_COLS = ['fecha_llegada', 'kg_pergamino_recibido', 'bolsas_recibidas',
+  'humedad_recepcion', 'temperatura_recepcion_c', 'recepcionista', 'estado_recepcion',
+  'nota_remision_verificada', 'observaciones']
+
+/** POST /api/etapas/recepcion  -> registra la llegada del lote a El Alto */
+router.post('/recepcion', asyncHandler(async (req, res) => {
+  const { lote, ...cuerpo } = req.body
+  if (!lote) return res.status(400).json({ success: false, error: 'Falta el lote' })
+
+  const envio = await uno(`
+    select en.id, en.kg_pergamino_despachado
+    from envios en join lotes l on l.id = en.lote_id
+    where upper(l.codigo) = upper($1)
+    order by en.fecha_salida limit 1`, [lote])
+  if (!envio) {
+    return res.status(404).json({
+      success: false, error: `El lote ${lote} no tiene un envio despachado que recibir` })
+  }
+
+  if (!(Number(cuerpo.kg_pergamino_recibido) > 0)) {
+    return res.status(400).json({ success: false, error: 'Falta el peso recibido' })
+  }
+
+  const cols = RECEPCION_COLS.filter((c) => !vacio(cuerpo[c]))
+  const fila = await uno(
+    `update envios set ${cols.map((c, i) => `${c} = $${i + 2}`).join(', ')}
+      where id = $1 returning *`,
+    [envio.id, ...cols.map((c) => cuerpo[c])])
+
+  res.status(201).json({ success: true, data: fila })
+}))
+
 /** GET /api/etapas/:etapa  -> registros de esa etapa, con su lote */
 router.get('/:etapa', asyncHandler(async (req, res) => {
   const def = ETAPAS[req.params.etapa]

@@ -125,6 +125,44 @@ export interface Envio {
   entregas: number | null
 }
 
+/** Un envio visto desde la planta de El Alto: lo despachado, lo recibido y su sello. */
+export interface Recepcion {
+  id: string
+  lote: string
+  certificacion: Certificacion
+  campania_id: number
+  fecha_salida: string
+  fecha_llegada: string | null
+  nota_remision: string | null
+  vehiculo: string | null
+  conductor: string | null
+  responsable_transportista: string | null
+  numero_bolsas: number | null
+  kg_pergamino_despachado: number | null
+  kg_pergamino_recibido: number | null
+  diferencia_kg: number | null
+  merma_pct: number | null
+  bolsas_recibidas: number | null
+  humedad_recepcion: number | null
+  temperatura_recepcion_c: number | null
+  recepcionista: string | null
+  estado_recepcion: string | null
+  nota_remision_verificada: boolean
+  observaciones: string | null
+  pendiente: boolean
+  encolado: boolean
+  estado_sello: string | null
+  hash_sello: string | null
+}
+
+/** Lo que devuelve encolar un registro para su sellado. */
+export interface Encolado {
+  id: number
+  estado: string
+  hash_sha256: string
+  creado_en: string
+}
+
 export interface Despacho {
   id: string
   fecha_despacho: string
@@ -455,6 +493,14 @@ export const api = {
   registrarEtapa: (slug: string, datos: Record<string, unknown>) =>
     pedir<{ id: string }>(`/etapas/${slug}`, { method: 'POST', body: JSON.stringify(datos) }),
   avanceFaseII: () => pedir<Record<string, boolean | string>[]>('/etapas/avance'),
+
+  recepciones: () => pedir<Recepcion[]>('/etapas/recepcion'),
+  registrarRecepcion: (datos: Record<string, unknown>) =>
+    pedir<{ id: string }>('/etapas/recepcion',
+      { method: 'POST', body: JSON.stringify(datos) }),
+  encolarSello: (tabla: string, id: string, fase?: string) =>
+    pedir<Encolado>('/blockchain/encolar',
+      { method: 'POST', body: JSON.stringify({ tabla, id, fase }) }),
 
   // La sultana no devuelve solo `data`: el factor y los precios vienen al lado
   // para que el formulario calcule los kg y el valor sin una segunda llamada.
